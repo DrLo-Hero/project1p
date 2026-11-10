@@ -1419,6 +1419,7 @@ function memoryCard(n) {
 
 function undoMemory(id) {
   const m = DB.memory.find(x => x.id === id);
+  if (m && m.coll === 'routine') { DB.routine = m.from; m.undone = true; save(); return; }
   if (m && m.added) {
     DB[m.coll] = (DB[m.coll] || []).filter(x => x.id !== m.rid);
     m.undone = true; save(); return;
@@ -1461,6 +1462,12 @@ function approveItem(id) {
   if (!q || q.status !== 'pending') return;
   (q.ops || []).forEach(o => {
     if (o.op === 'gpush') { DB.gsync.pushOK = true; return; }
+    // A plan update can replace the whole weekday routine; undo puts the old one back.
+    if (o.op === 'routine') {
+      DB.memory.push({ id: uid(), d: today(), kind: q.src, text: q.text.replace(/\?$/, '') + ' (approved).', coll: 'routine', from: DB.routine || [] });
+      DB.routine = JSON.parse(JSON.stringify(o.routine));
+      return;
+    }
     const list = DB[o.coll];
     if (!list) return;
     if (o.op === 'add') {
