@@ -1840,7 +1840,13 @@ async function loadBundledPlan(manual, data) {
   const gone = new Set(DB.prefs.gone || []);
   ['goals', 'habits', 'tasks', 'cards', 'apps'].forEach(k => { if (data[k]) data[k] = data[k].filter(x => !gone.has(x.id)); });
   delete data.memory;
-  if (Array.isArray(data.proposals)) queueAdd(data.proposals.map(x => Object.assign({ src: 'plan' }, x)));
+  if (Array.isArray(data.proposals)) {
+    // A plan file carries the whole current schedule: an older plan proposal it dropped is superseded,
+    // so approving it later can't move habits back to old times.
+    const live = new Set(data.proposals.map(x => x.ref));
+    DB.queue.forEach(q => { if (q.src === 'plan' && q.status === 'pending' && !live.has(q.ref)) q.status = 'skipped'; });
+    queueAdd(data.proposals.map(x => Object.assign({ src: 'plan' }, x)));
+  }
   // Mail the plan has already dealt with is never raised again by the Gmail scan.
   if (Array.isArray(data.seenMail)) DB.gsync.seen = [...new Set(DB.gsync.seen.concat(data.seenMail))];
   delete data.proposals; delete data.seenMail;
