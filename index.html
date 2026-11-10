@@ -1738,6 +1738,94 @@ async function gRemoveAll() {
 // that side wins. A device that has never synced takes the cloud copy. If both changed,
 // the newer wins and the other is kept on this device (Settings → Backup), never lost.
 // ponytail: whole-file last-write-wins plus one kept copy; merge per record if you often edit two devices offline.
+// ---------- account: email + password ----------
+// Firebase Auth and Realtime Database over plain REST, no SDK. These two values come from the
+// Firebase console (goals/PLAN.md → Accounts). They aren't secrets: the database rules let each
+// account read and write only its own copy. Empty means accounts aren't set up yet.
+const ACCOUNT = { apiKey: '', db: '' };
+const AKEY = 'p1p.account';
+const acct = () => { try { return JSON.parse(localStorage.getItem(AKEY) || 'null'); } catch (e) { return null; } };
+const AUTH_ERR = { EMAIL_EXISTS: 'That email already has an account: log in instead.', EMAIL_NOT_FOUND: 'No account with that email.',
+  INVALID_PASSWORD: 'Wrong password.', INVALID_LOGIN_CREDENTIALS: 'Wrong email or password.', INVALID_EMAIL: 'That email address looks wrong.',
+  WEAK_PASSWORD: 'Use a password of at least 6 characters.', MISSING_PASSWORD: 'Type a password.',
+  TOO_MANY_ATTEMPTS_TRY_LATER: 'Too many tries. Wait a few minutes.', USER_DISABLED: 'That account is disabled.' };
+function keepAcct(j, email) {
+  localStorage.setItem(AKEY, JSON.stringify({ uid: j.localId || j.user_id, email: j.email || email,
+    t: j.idToken || j.id_token, r: j.refreshToken || j.refresh_token, exp: Date.now() + (Number(j.expiresIn || j.expires_in) || 3600) * 1000 }));
+}
+async function authCall(path, body) {
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:${path}?key=${ACCOUNT.apiKey}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  const code = String((j.error && j.error.message) || '').split(' ')[0];
+  if (!r.ok) throw new Error(AUTH_ERR[code] || code || `The account server said ${r.status}`);
+  return j;
+}
+/** A live ID token. Sign-ins refresh themselves, so you stay logged in until you log out. */
+async function acctToken() {
+  const a = acct();
+  if (!a) return null;
+  if (a.exp > Date.now() + 60000) return a.t;
+  const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${ACCOUNT.apiKey}`, { method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: a.r }) });
+  if (r.status === 400 || r.status === 401) { localStorage.removeItem(AKEY); return null; } // revoked or password changed
+  if (!r.ok) throw new Error(`The account server said ${r.status}`);
+  keepAcct(await r.json(), a.email);
+  return acct().t;
+}
+/** The account's one cloud copy. Stored as a string: the database would drop empty lists and refuse some keys. */
+async function acctData(snap) {
+  const t = await acctToken();
+  if (!t) throw new Error('Logged out: log in again under Settings → Account.');
+  const r = await fetch(`${ACCOUNT.db}/users/${acct().uid}.json?auth=${encodeURIComponent(t)}`,
+    snap ? { method: 'PUT', body: JSON.stringify(JSON.stringify(snap)) } : {});
+  if (!r.ok) throw new Error(`The account server said ${r.status}: ${String(await r.text()).slice(0, 160)}`);
+  const s = await r.json();
+  return typeof s === 'string' ? JSON.parse(s) : null;
+}
+/** Log in or create the account, then sync: a new account takes this device's data, an existing one comes down. */
+async function acctEnter(kind) {
+  const email = val('acEmail').trim(), password = val('acPass');
+  try {
+    if (kind === 'reset') { await authCall('sendOobCode', { requestType: 'PASSWORD_RESET', email }); toast('Password reset email sent.'); return; }
+    keepAcct(await authCall(kind === 'up' ? 'signUp' : 'signInWithPassword', { email, password, returnSecureToken: true }), email);
+  } catch (e) { alert(e.message); return; }
+  setSync({ id: null, base: null }); // a different cloud copy: match it fresh
+  closeSheet(); render(); // sync never swaps data under an open sheet
+  toast(kind === 'up' ? 'Account created. Your data is saved to it.' : 'Logged in.');
+  await driveSync();
+}
+/** Your data stays on this device; it just stops syncing to the account. */
+function acctOut() {
+  clearTimeout(pushT);
+  try { localStorage.removeItem(AKEY); } catch (e) {}
+  setSync({ id: null, base: null });
+  closeSheet(); render(); toast('Logged out.');
+}
+function accountCard() {
+  if (!ACCOUNT.apiKey) return `<div class="card"><h2>${ic('lock')} Account</h2>
+    <p class="hint">Accounts aren't switched on yet. They need a one-time setup (goals/PLAN.md → Accounts).</p></div>`;
+  const a = acct(), ds = syncState();
+  if (a) return `<div class="card"><h2>${ic('lock')} Account</h2>
+    <p class="hint">Logged in as <b>${esc(a.email)}</b>. Everything you enter is saved to your account and shows on every device you log in on.
+      ${ds.dirty ? 'Changes waiting to upload.' : 'Up to date.'}
+      ${ds.err ? `<br><span style="color:var(--red)">${esc(ds.err)}</span>` : ''}</p>
+    <div class="row" style="gap:8px;margin-top:10px">
+      <button class="btn sec" style="margin:0;flex:1" data-act="acsync">Sync now</button>
+      <button class="btn sec" style="margin:0;flex:1" data-act="acout">Log out</button></div></div>`;
+  return `<div class="card"><h2>${ic('lock')} Account</h2>
+    <p class="hint">Create an account to keep your data safe and use it on any device. Creating one saves what's on this device to it.
+      Logging in on another device brings your data there.</p>
+    <label class="f">Email</label>
+    <input id="acEmail" type="email" autocomplete="username" autocapitalize="off" spellcheck="false">
+    <label class="f">Password</label>
+    <input id="acPass" type="password" autocomplete="current-password" minlength="6">
+    <div class="row" style="gap:8px;margin-top:10px">
+      <button class="btn" style="margin:0;flex:1" data-act="acin">Log in</button>
+      <button class="btn sec" style="margin:0;flex:1" data-act="acup">Create account</button></div>
+    <button class="btn sec" data-act="acreset">Forgot password</button></div>`;
+}
+
 const SKEY = 'p1p.sync', KEPT = 'p1p.sync.kept', DFILE = 'p1p-data.json';
 const DRIVE = 'https://www.googleapis.com/drive/v3/files';
 function syncState() { try { return JSON.parse(localStorage.getItem(SKEY) || '{}'); } catch (e) { return {}; } }
@@ -1748,26 +1836,31 @@ let pushT = null;
 function changed() {
   setSync({ dirty: true, at: Date.now() });
   clearTimeout(pushT);
-  if (gToken()) pushT = setTimeout(() => driveSync(), 4000);
+  if (acct() || gToken()) pushT = setTimeout(() => driveSync(), 4000);
 }
 function snapshot(at) {
   // The Face ID key belongs to this phone; on another device it would lock you out.
   return { at, db: Object.assign({}, DB, { prefs: Object.assign({}, DB.prefs, { lockId: null }) }), plan: localStorage.getItem(PKEY) };
 }
 async function driveSync() {
-  if (!gToken() || driveSync.busy) return;
+  // A logged-in account is the cloud copy; otherwise Google Drive is, when you're signed in to Google.
+  const useAcct = !!(ACCOUNT.apiKey && acct());
+  if (!(useAcct || gToken()) || driveSync.busy) return;
   driveSync.busy = true;
   try {
     flushSave();
     let st = syncState(), id = st.id, remote = null;
-    if (!id) {
-      const r = await gFetch(`${DRIVE}?spaces=appDataFolder&fields=files(id)&q=${encodeURIComponent(`name='${DFILE}'`)}`);
-      id = r && r.files && r.files[0] && r.files[0].id;
-    }
-    if (id) try { remote = await gFetch(`${DRIVE}/${id}?alt=media`); }
-    catch (e) {
-      if (/ 404/.test(e.message)) id = null;         // deleted in Drive: write a new one
-      else if (!(e instanceof SyntaxError)) throw e; // empty or broken file: write over it
+    if (useAcct) { id = 'account'; remote = await acctData(); }
+    else {
+      if (!id) {
+        const r = await gFetch(`${DRIVE}?spaces=appDataFolder&fields=files(id)&q=${encodeURIComponent(`name='${DFILE}'`)}`);
+        id = r && r.files && r.files[0] && r.files[0].id;
+      }
+      if (id) try { remote = await gFetch(`${DRIVE}/${id}?alt=media`); }
+      catch (e) {
+        if (/ 404/.test(e.message)) id = null;         // deleted in Drive: write a new one
+        else if (!(e instanceof SyntaxError)) throw e; // empty or broken file: write over it
+      }
     }
     const theirs = !!remote && remote.at !== st.base; // the cloud moved since this device matched it
     if (theirs && $('#sheet').classList.contains('open')) return; // never swap data under an open sheet
@@ -1780,12 +1873,15 @@ async function driveSync() {
     if (theirs) localStorage.setItem(KEPT, JSON.stringify(remote)); // both changed; this side is newer
     if (remote && !theirs && !st.dirty) { setSync({ id, err: null, last: Date.now() }); return; }
     const snap = snapshot(st.at || Date.now());
-    if (!id) id = (await gFetch(DRIVE, { method: 'POST', body: JSON.stringify({ name: DFILE, parents: ['appDataFolder'] }) })).id;
-    await gFetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`, { method: 'PATCH', body: JSON.stringify(snap) });
+    if (useAcct) await acctData(snap);
+    else {
+      if (!id) id = (await gFetch(DRIVE, { method: 'POST', body: JSON.stringify({ name: DFILE, parents: ['appDataFolder'] }) })).id;
+      await gFetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`, { method: 'PATCH', body: JSON.stringify(snap) });
+    }
     // An edit made during the upload is still unsynced.
     setSync({ id, base: snap.at, dirty: syncState().at !== snap.at, err: null, last: Date.now() });
   } catch (e) {
-    setSync({ err: / 403/.test(e.message) ? 'Drive sync needs permission: turn on the Google Drive API in Google Cloud, then tap Reconnect.' : e.message });
+    setSync({ err: !useAcct && / 403/.test(e.message) ? 'Drive sync needs permission: turn on the Google Drive API in Google Cloud, then tap Reconnect.' : e.message });
   } finally { driveSync.busy = false; }
 }
 function adopt(remote, id) {
@@ -4028,8 +4124,8 @@ function settingsSheet() {
     ${googleCard()}
 
     <div class="card"><h2>${ic('info')} About</h2>
-      <p class="hint">Project 1% · build ${esc(BUILD)} · offline web app · no accounts,
-      no analytics, no network calls unless you connect Google.<br>
+      <p class="hint">Project 1% · build ${esc(BUILD)} · offline web app · no analytics,
+      no network calls unless you log in or connect Google.<br>
       ${DB.habits.length} habits · ${Object.keys(DB.logs).length} logs ·
       ${DB.txns.length} entries · ${DB.tasks.length} tasks.</p>
       <button class="btn sec" data-act="forceUpdate">Check for an update</button>
@@ -5146,6 +5242,11 @@ document.addEventListener('click', async ev => {
     case 'qok': approveItem(arg); render(); break;
     case 'qno': rejectItem(arg); render(); break;
     case 'qall': queuePending().forEach(q => approveItem(q.id)); render(); toast('Approved.'); break;
+    case 'acin': await acctEnter('in'); break;
+    case 'acup': await acctEnter('up'); break;
+    case 'acreset': await acctEnter('reset'); break;
+    case 'acsync': await driveSync(); if (S2 && S2.redraw) S2.redraw(); break;
+    case 'acout': acctOut(); break;
     case 'gconnect': googleConnect(); break;
     case 'gsync': await driveSync(); await syncGoogle(true); if (S2 && S2.redraw) S2.redraw(); break;
     case 'dlKept': download(`project1percent-replaced-${today()}.json`, localStorage.getItem(KEPT) || '{}', 'application/json'); break;
