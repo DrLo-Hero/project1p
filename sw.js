@@ -6,7 +6,7 @@
 // online and still works with no signal; icons never change, so they stay cache-first.
 // deploy.js stamps this with a hash of the shipped files, so every deploy changes sw.js
 // and phones notice. No manual bump.
-const CACHE = 'p1p-1157b3e3c5';
+const CACHE = 'p1p-a3a45d9040';
 const SHELL = ['./', 'index.html', 'rules.js', 'core/signals.js', 'core/calendar.js', 'core/engine.js', 'manifest.webmanifest'];
 const ASSETS = ['icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable.png', 'fonts/jost.woff2', 'fonts/cormorant.woff2'];
 

@@ -1138,6 +1138,20 @@ button.hb-stat{cursor:pointer;transition:background .2s ease}
   .mc .any.x2{display:none}
 }
 
+
+/* ---------- phones: the calendar sizes to its content ----------
+   On a tablet the calendar stretches to the screen's height. A phone scrolls instead, so
+   there is no height to stretch into: left to stretch, the grid collapsed to nothing and the
+   card cut it off. Here every part takes the room its content needs. Last on purpose. */
+@media (max-width:759px){
+  /* Banner figures stay compact on a narrow screen instead of wrapping into tall cards. */
+  .hb-stat b{font-size:clamp(18px, 5.4vw, 22px);white-space:nowrap}
+  .hb-stat small{font-size:9.5px;letter-spacing:.06em}
+  .calpane{overflow:visible}
+  .calpane .tg,.calpane .cm,.calpane .cm-grid{flex:none;min-height:auto}
+  .calpane .tg-body{flex:none;height:calc(var(--hours) * 46px);min-height:0}
+}
+
 /* Motion is decoration. If the OS says no, it all goes. */
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:1ms !important;animation-delay:0s !important;animation-iteration-count:1 !important;
@@ -1275,7 +1289,7 @@ button.hb-stat{cursor:pointer;transition:background .2s ease}
    One file, no framework, no dependencies. Rules live in rules.js so they can be
    tested in Node (see test.js). */
 
-const BUILD = '2026-11-19.3';
+const BUILD = '2026-11-19.4';
 
 // A thrown error used to mean a blank white screen and no way to report it.
 // Put the message on the glass instead.
