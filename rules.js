@@ -360,6 +360,93 @@ function daySchedule(items, from = 6, to = 22) {
   return { anytime, placed, hours, from, to };
 }
 
+// ---------- the day on a wall ----------
+// A smart calendar answers two questions from across the room: what is on now, and what
+// is next. Both read daySchedule's placed list, where `mins` is the start minute.
+
+/** When a placed slot ends: its own `to`, else start + `len`, else it is a point in time. */
+function slotEnd(s) { return s.to ? minutesOf(s.to) : s.mins + (s.len || 0); }
+
+/** Routine blocks count here: "Lunch until 13:00" is exactly what a wall should say.
+    Done items, and the later pieces of a habit cut in two, do not. */
+function nowNext(placed, nowMins) {
+  const live = (placed || []).filter(s => !s.done && !s.part);
+  return { now: live.filter(s => s.mins <= nowMins && nowMins < slotEnd(s)).pop() || null,
+           next: live.find(s => s.mins > nowMins) || null };
+}
+
+/** A heads-up `lead` minutes before each timed item and one as it starts. Blocks and
+    finished items stay quiet. The window is two minutes wide so a throttled timer still
+    lands in it; keys are stable for the day so the caller fires each one once. */
+function dueReminders(placed, nowMins, lead) {
+  const out = [];
+  (placed || []).forEach(s => {
+    if (s.done || s.block || s.part) return;
+    [[lead, `In ${lead} min: ${s.name}`], [0, `Now: ${s.name}`]].forEach(([k, text]) => {
+      const at = s.mins - k;
+      if (nowMins >= at && nowMins < at + 2) out.push({ key: `${s.at}|${s.name}|${k}`, text });
+    });
+  });
+  return out;
+}
+
+/** A day column on a calendar grid, from hour `from` to hour `to`. Routine blocks become
+    full-width bands behind everything; the rest are laid out in side-by-side lanes when
+    they overlap, the way a calendar app does it. Positions are percentages of the column.
+    A point in time gets 25 minutes of height so it can be read and tapped. */
+function layoutDay(placed, from, to) {
+  const lo = from * 60, span = (to - from) * 60;
+  const pos = (a, b) => ({ top: +(((Math.max(a, lo) - lo) / span) * 100).toFixed(2),
+                           height: +(((Math.min(b, to * 60) - Math.max(a, lo)) / span) * 100).toFixed(2) });
+  const ev = (placed || []).filter(s => !s.block).map(s => ({ s, a: s.mins, b: Math.max(slotEnd(s), s.mins + 25) }))
+    .sort((x, y) => x.a - y.a || y.b - x.b);
+  let group = [], ends = [], groupEnd = -1;
+  const flush = () => { group.forEach(g => { g.cols = ends.length; }); group = []; ends = []; };
+  ev.forEach(e => {
+    if (e.a >= groupEnd) flush(); // nothing still running: a new cluster starts
+    let c = ends.findIndex(t => t <= e.a);
+    if (c < 0) { c = ends.length; ends.push(e.b); } else ends[c] = e.b;
+    e.col = c; group.push(e); groupEnd = Math.max(groupEnd, e.b);
+  });
+  flush();
+  return {
+    blocks: (placed || []).filter(s => s.block).map(s => Object.assign({ s }, pos(s.mins, slotEnd(s)))),
+    events: ev.map(e => Object.assign({ s: e.s, col: e.col, cols: e.cols }, pos(e.a, e.b))),
+  };
+}
+
+// ---------- weather and tides ----------
+// Open-Meteo hands back WMO weather codes and an hourly sea level. These turn them into
+// words and into the next highs and lows.
+
+/** WMO code -> [label, icon]. */
+function wxInfo(code) {
+  const c = Number(code);
+  return c === 0 ? ['Clear', 'sun'] : c === 1 ? ['Mostly clear', 'sun'] : c === 2 ? ['Partly cloudy', 'cloud-sun']
+    : c === 3 ? ['Overcast', 'cloud'] : c === 45 || c === 48 ? ['Fog', 'fog']
+    : c >= 51 && c <= 57 ? ['Drizzle', 'rain'] : c >= 61 && c <= 67 ? ['Rain', 'rain']
+    : c >= 71 && c <= 77 ? ['Snow', 'snow'] : c >= 80 && c <= 82 ? ['Showers', 'rain']
+    : c === 85 || c === 86 ? ['Snow showers', 'snow'] : c >= 95 ? ['Thunderstorm', 'storm'] : ['—', 'cloud'];
+}
+
+/** Highs and lows in an hourly sea-level series (local 'YYYY-MM-DDTHH:MM' times). Hourly
+    samples miss the true turn by up to half an hour, so each one is refined with the
+    parabola through it and its two neighbours. Gaps (null) are skipped. */
+function tideTurns(times, heights) {
+  const out = [], h = heights || [];
+  for (let i = 1; i < h.length - 1; i++) {
+    const y0 = h[i - 1], y1 = h[i], y2 = h[i + 1];
+    if (y0 == null || y1 == null || y2 == null) continue;
+    const high = y1 > y0 && y1 >= y2, low = y1 < y0 && y1 <= y2;
+    if (!high && !low) continue;
+    const den = y0 - 2 * y1 + y2;
+    const off = den ? Math.max(-0.5, Math.min(0.5, (0.5 * (y0 - y2)) / den)) : 0;
+    const d = new Date(new Date(times[i]).getTime() + off * 3600e3);
+    out.push({ day: ymd(d), at: hhmm(d.getHours() * 60 + d.getMinutes()), h: +(y1 - 0.25 * (y0 - y2) * off).toFixed(2), high });
+  }
+  return out;
+}
+
 // ---------- one number for a day ----------
 // The dashboard needs a portfolio value: a single figure that moves when any of the
 // three tracks moves. Domains with nothing to say on a given day are left out of the
@@ -1210,6 +1297,114 @@ function gcalClashes(events, habits, fromKey, days, tz) {
   return out;
 }
 
+/** One-off timed events you're going to, from your own calendar: [{ ref, day, at, mins, summary, career }].
+    Repeating events are left to gcalClashes: they are standing commitments, not one day's change. */
+const CAREER_EVENT = /interview|info(rmation)? session|webinar|open house|visit day|career|recruit|hiring|network|coffee chat|meet ?up|hello from|meet .+ in |connect|mentor|office hours|fair/i;
+function gcalEvents(events, fromKey, days, tz) {
+  const last = addDays(fromKey, days - 1);
+  return events.filter(ev => ev.status !== 'cancelled' && ev.transparency !== 'transparent' && !ev.recurringEventId &&
+      ev.start && ev.start.dateTime && ev.end && ev.end.dateTime &&
+      !(ev.extendedProperties && ev.extendedProperties.private && ev.extendedProperties.private.p1src) &&
+      !(ev.attendees || []).some(a => a.self && a.responseStatus === 'declined'))
+    .map(ev => {
+      const s = localOf(ev.start.dateTime, tz), e = localOf(ev.end.dateTime, tz);
+      const mins = Math.round((new Date(ev.end.dateTime) - new Date(ev.start.dateTime)) / 6e4);
+      const summary = ev.summary || 'Busy';
+      return { ref: `ev|${ev.id}|${s}`, id: ev.id, day: s.slice(0, 10), at: s.slice(11, 16), mins: Math.min(mins, 24 * 60 - minutesOf(s.slice(11, 16))), summary, career: CAREER_EVENT.test(summary + ' ') };
+    })
+    .filter(x => x.day >= fromKey && x.day <= last && x.mins > 0);
+}
+
+/** Every event on your own calendar, for showing on the day: repeating, all-day and free ones
+    included. [{ id, day, at, mins, summary, link, free, allDay }]. at is null for all-day.
+    ponytail: a timed event that runs past midnight shows on its first day only. */
+function gcalAgenda(events, fromKey, days, tz) {
+  const last = addDays(fromKey, days - 1), out = [];
+  (events || []).forEach(ev => {
+    if (ev.status === 'cancelled' || !ev.start || (ev.extendedProperties && ev.extendedProperties.private && ev.extendedProperties.private.p1src) ||
+        (ev.attendees || []).some(a => a.self && a.responseStatus === 'declined')) return;
+    const base = { id: ev.id, summary: ev.summary || 'Busy', link: ev.htmlLink || '', free: ev.transparency === 'transparent' };
+    if (ev.start.date) {
+      const end = (ev.end && ev.end.date) || addDays(ev.start.date, 1);
+      for (let d = ev.start.date < fromKey ? fromKey : ev.start.date; d < end && d <= last; d = addDays(d, 1))
+        out.push(Object.assign({ day: d, at: null, mins: 0, allDay: true }, base));
+      return;
+    }
+    if (!ev.start.dateTime || !ev.end || !ev.end.dateTime) return;
+    const s = localOf(ev.start.dateTime, tz), day = s.slice(0, 10), at = s.slice(11, 16);
+    const mins = Math.round((new Date(ev.end.dateTime) - new Date(ev.start.dateTime)) / 6e4);
+    if (day < fromKey || day > last || mins <= 0) return;
+    out.push(Object.assign({ day, at, mins: Math.min(mins, 24 * 60 - minutesOf(at)), allDay: false }, base));
+  });
+  return out;
+}
+
+/**
+ * One day's routine and timed habits, fitted around that day's events.
+ * items: [{ at, to?, mins?, name, block? }]; events: [{ at, mins, name, career }].
+ * Anything an event overlaps keeps only the part outside it. A work block's lost minutes
+ * move to a freed slot: the career and networking blocks when a career event stands in for
+ * them, then the buffer. Meals, breaks, sleep and the dog are only trimmed (lunch moved to
+ * 16:30 helps nobody); one the event swallows whole starts when the event ends.
+ * A habit with no length that lands inside an event moves to the event's end.
+ * Returns the items to draw; a `note` on each one says what changed.
+ */
+// ponytail: blocks are told apart by name; give routine blocks a `kind` if the names drift.
+const REST = /lunch|dinner|breakfast|break|nap|wake|hygiene|lights|sleep|screens off|free time|dog/i;
+const CAREER_BLOCK = /applications|career|networking/i, BUFFER_BLOCK = /buffer/i;
+/** The day's career requirements: what a career event stands in for (blocks and habits alike). */
+function isCareerWork(name) { return CAREER_BLOCK.test(String(name || '')); }
+function fitDay(items, events) {
+  const evs = (events || []).map(e => ({ e, s: minutesOf(e.at), t: minutesOf(e.at) + (e.mins || 60) })).filter(x => x.s != null);
+  if (!evs.length) return items;
+  const career = evs.find(x => x.e.career);
+  const out = [], lost = [], free = [];
+  const piece = (it, a, b, note) => Object.assign({}, it, { at: hhmm(a), to: hhmm(Math.min(b, 1439)), note });
+  // [a, b) minus every event, as the pieces left over.
+  const cut = (a, b) => evs.reduce((ps, x) => ps.flatMap(([p, q]) =>
+    [[p, Math.min(q, x.s)], [Math.max(p, x.t), q]].filter(([m, n]) => n > m)), [[a, b]]);
+  items.forEach(it => {
+    const a = minutesOf(it.at);
+    if (a == null) { out.push(it); return; }
+    const len = it.to ? minutesOf(it.to) - a : it.mins || 0;
+    if (career && isCareerWork(it.name)) {
+      if (it.block) free.push(...cut(a, a + len)); // a habit at the same time is the same slot, freed once
+      out.push(Object.assign({}, it, { note: `covered by ${career.e.name}`, covered: true }));
+      return;
+    }
+    if (!len) {
+      const hit = evs.find(x => x.s <= a && a < x.t);
+      out.push(hit ? Object.assign({}, it, { at: hhmm(hit.t), note: `after ${hit.e.name}` }) : it);
+      return;
+    }
+    const parts = cut(a, a + len), buffer = it.block && BUFFER_BLOCK.test(it.name);
+    if (buffer) free.push(...parts);
+    const hits = evs.filter(x => x.s < a + len && a < x.t);
+    if (!hits.length) { out.push(it); return; }
+    const why = hits.map(x => x.e.name).join(', ');
+    parts.forEach(([p, q]) => out.push(piece(it, p, q, `${q - p} min, cut for ${why}`)));
+    if (!parts.length && REST.test(it.name)) {
+      const end = Math.max(...hits.map(x => x.t));
+      out.push(piece(it, end, end + len, `after ${why}`));
+      return;
+    }
+    const gone = len - parts.reduce((s, [p, q]) => s + q - p, 0);
+    if (gone && !buffer && !REST.test(it.name)) lost.push({ it, gone, why });
+  });
+  free.sort((x, y) => x[0] - y[0]);
+  lost.forEach(({ it, gone, why }) => {
+    let left = gone;
+    free.forEach(f => {
+      const n = Math.min(left, f[1] - f[0]);
+      if (n <= 0) return;
+      out.push(piece(it, f[0], f[0] + n, `${n} min, moved here for ${why}`));
+      f[0] += n; left -= n;
+    });
+    if (left) out.push(Object.assign({}, it, { at: null, to: null, note: `${left} min that didn't fit today (for ${why})` }));
+  });
+  return out;
+}
+
 /** Every adjustment the plan should make today, as { coll, id, set, kind, text }. */
 function adapt(ctx) {
   const t0 = ctx.today, out = [];
@@ -1334,10 +1529,10 @@ if (typeof module !== 'undefined' && module.exports) {
     spend, income, balance, sameMonth,
     findDate, findTime, recurringWeekday, cleanTitle, parseText, parseICS, parseICSDate,
     completionRate, weekdayRates, daysBetween, nextMilestone, checkinsToReach, coach,
-    dayIndex, indexSeries, minutesOf, hhmm, daySchedule,
+    dayIndex, indexSeries, minutesOf, hhmm, daySchedule, slotEnd, nowNext, dueReminders, layoutDay, wxInfo, tideTurns,
     reviewCard, dueCards, retention, goalPace, practiceTrend, BOXES,
     keystone, quadrants, freshStart, project, calibration, deepShare,
     APP_STAGES, APP_CLOSED, appAlerts, weightsFrom, trackedDone, adapt, tradeR, tradeStats,
-    mailStage, mailOrg, mailTitle, mailProposals, localOf, gcalPulled, gcalDiff, gcalClashes,
+    mailStage, mailOrg, mailTitle, mailProposals, localOf, gcalPulled, gcalDiff, gcalClashes, gcalEvents, gcalAgenda, fitDay, isCareerWork,
   };
 }

@@ -9,33 +9,52 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Project 1%">
-<meta name="theme-color" content="#f3f4f8" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0a0b0f" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f3efe8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121110" media="(prefers-color-scheme: dark)">
 <style>
 :root{
   color-scheme: light dark;
-  /* Neutrals are biased a few degrees toward the accent rather than pure grey, so the
-     greys read as chosen instead of inherited. Semantic colours stay iOS-native. */
-  --bg:#f3f4f8; --card:#ffffff; --card2:#eceef4; --fg:#0c0e14; --dim:#5d6377;
-  --line:rgba(18,22,40,.10); --tint:#4f8ef7; --green:#34c759; --red:#ff375f; --orange:#ff9f0a;
-  --purple:#af52de;
-  --radius:16px; --pad:16px;
-  /* Elevation: a card is separated by a hairline and a soft shadow, not by colour alone. */
-  --sh1:0 1px 2px rgba(12,14,20,.05), 0 1px 1px rgba(12,14,20,.04);
-  --sh2:0 4px 16px rgba(12,14,20,.07), 0 1px 2px rgba(12,14,20,.05);
-  --sh3:0 12px 34px rgba(12,14,20,.16);
+  /* Quiet luxury: warm ivory and stone, espresso type, one bronze accent. Semantic
+     colours are muted earth tones (sage, terracotta, ochre, heather) so nothing shouts. */
+  --bg:#f3efe8; --card:#fbf9f5; --card2:#ebe5db; --fg:#211d18; --dim:#7b7266;
+  --line:rgba(70,56,40,.12); --tint:#8c6c43; --green:#5d8a68; --red:#b4594b; --orange:#bf8a46;
+  --purple:#857399;
+  --radius:18px; --pad:16px;
+  /* Elevation is a hairline and a whisper of shadow, never a drop shadow you notice. */
+  --sh1:0 1px 1px rgba(60,44,24,.04);
+  --sh2:0 10px 30px -12px rgba(60,44,24,.14), 0 1px 2px rgba(60,44,24,.04);
+  --sh3:0 24px 60px -20px rgba(60,44,24,.28);
+  --serif:"Cormorant Garamond","Cormorant",Georgia,"Times New Roman",serif;
+  --sans:"Jost","Futura","Avenir Next",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI",Roboto,sans-serif;
   --hair:1px solid var(--line);
   /* Type scale. One ratio, used everywhere, so nothing is sized by feel. */
   --t-cap:11px; --t-sm:13px; --t-md:15px; --t-lg:17px; --t-xl:22px; --t-hero:46px;
   --ease:cubic-bezier(.22,1,.36,1);
+  /* Surfaces that differ by theme get a token, so a theme is one block, not a hunt. */
+  --well:var(--card2); --thumb:var(--card); --inset:inset 0 1px 2px rgba(12,14,20,.06);
+  --glass:rgba(251,249,245,.78);
 }
+/* Theme: Auto follows the device; Light or Dark (Settings, or the sun/moon button)
+   pins it with data-theme on <html>. */
+:root[data-theme="light"]{color-scheme:light}
 @media (prefers-color-scheme: dark){
-  :root{ --bg:#0a0b0f; --card:#16181f; --card2:#20232c; --fg:#f0f1f5; --dim:#8e94a6;
-         --line:rgba(150,160,190,.16);
-         --sh1:0 1px 2px rgba(0,0,0,.5);
-         --sh2:0 4px 16px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.4);
-         --sh3:0 12px 34px rgba(0,0,0,.62); }
+  :root:not([data-theme="light"]){ --bg:#121110; --card:#1a1917; --card2:#24221f; --fg:#ede7dd; --dim:#9b9285;
+         --line:rgba(237,231,221,.10); --tint:#c9a878;
+         --green:#86ab8e; --red:#cf7a6b; --orange:#d4a465; --purple:#a594bb;
+         --sh1:0 1px 1px rgba(0,0,0,.3);
+         --sh2:0 12px 32px -14px rgba(0,0,0,.6), 0 1px 2px rgba(0,0,0,.3);
+         --sh3:0 24px 60px -20px rgba(0,0,0,.75);
+         --well:#2a2824; --thumb:#36332e; --inset:inset 0 1px 2px rgba(0,0,0,.35);
+         --glass:rgba(26,25,23,.78); color-scheme:dark; }
 }
+:root[data-theme="dark"]{ --bg:#121110; --card:#1a1917; --card2:#24221f; --fg:#ede7dd; --dim:#9b9285;
+         --line:rgba(237,231,221,.10); --tint:#c9a878;
+         --green:#86ab8e; --red:#cf7a6b; --orange:#d4a465; --purple:#a594bb;
+         --sh1:0 1px 1px rgba(0,0,0,.3);
+         --sh2:0 12px 32px -14px rgba(0,0,0,.6), 0 1px 2px rgba(0,0,0,.3);
+         --sh3:0 24px 60px -20px rgba(0,0,0,.75);
+         --well:#2a2824; --thumb:#36332e; --inset:inset 0 1px 2px rgba(0,0,0,.35);
+         --glass:rgba(26,25,23,.78); color-scheme:dark; }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
 /* iOS Safari only fires click on non-button elements that look clickable.
    Without this, tapping a transaction row or a task title does nothing. */
@@ -45,14 +64,15 @@
        white-space:pre-wrap;word-break:break-word;max-height:45dvh;overflow:auto}
 #crash[hidden]{display:none}
 html,body{margin:0;padding:0;height:100%}
-/* No webfont on purpose: sw.js skips cross-origin requests, so a CDN face would
-   silently fall back the moment the app goes offline. The native UI stack is the
-   one typeface guaranteed to be there, tuned here rather than left at defaults. */
+/* Two faces, shipped with the app (app/fonts, OFL) so they work offline: Jost, a clean
+   geometric sans, for everything you read; Cormorant Garamond for what you look at —
+   the clock, the titles, the big numbers. Native fonts stand in until they load. */
+@font-face{font-family:"Jost";src:url(fonts/jost.woff2) format("woff2");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Cormorant Garamond";src:url(fonts/cormorant.woff2) format("woff2");font-weight:300 600;font-display:swap}
 body{
   background:var(--bg); color:var(--fg);
-  font:var(--t-md)/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI Variable Text",
-       "Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  font-feature-settings:"cv11","ss01";
+  font:var(--t-md)/1.5 var(--sans);
+  font-feature-settings:"kern","liga";
   -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
   overscroll-behavior-y:none;
 }
@@ -101,15 +121,20 @@ nav button[aria-current="page"]::before{
   content:"";position:absolute;top:0;left:50%;width:22px;height:2px;margin-left:-11px;
   border-radius:0 0 2px 2px;background:var(--tint)}
 
-/* On a desktop window the app is a phone column pinned to the left, which reads like an
-   unfinished port. Centre it and give it an edge instead. */
-@media (min-width:720px){
+/* On a tablet, a wall or a desktop the app uses the screen, the way a smart calendar
+   does: Today and the week spread into columns, everything else stays a readable
+   column in the middle, and sheets become a centred panel instead of a full-width drawer. */
+@media (min-width:760px){
   body{background:
     radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--tint) 7%, transparent), transparent 60%),
     var(--bg)}
-  #app{max-width:480px;margin:0 auto;height:100dvh;
-       border-left:var(--hair);border-right:var(--hair);background:var(--bg);box-shadow:var(--sh3)}
-  #fab{right:auto;left:50%;margin-left:180px}
+  #app{max-width:none;margin:0 auto;height:100dvh}
+  #main > div{max-width:720px;margin:0 auto}
+  #main > div.wide{max-width:none}
+  main{padding:20px 24px 120px}
+  nav{justify-content:center}
+  nav button{flex:0 1 120px}
+  #fab{right:max(24px, calc(50% - 696px))}
 }
 
 #fab{
@@ -152,13 +177,11 @@ nav button[aria-current="page"]::before{
 .divider{height:1px;background:var(--line);margin:10px 0}
 .mono{font-variant-numeric:tabular-nums}
 
-.bar{height:8px;border-radius:4px;background:var(--card2);overflow:hidden}
-@media (prefers-color-scheme: dark){ .bar{background:#3a3a3c} }
+.bar{height:8px;border-radius:4px;background:var(--well);overflow:hidden}
 .bar i{display:block;height:100%;border-radius:4px;background:var(--tint);transition:width .25s}
 
 .strip{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:4px;margin:0 calc(var(--pad) * -1);padding-left:var(--pad);padding-right:var(--pad)}
 .chip{flex:0 0 150px;background:var(--card2);border-radius:14px;padding:12px;scroll-snap-align:start}
-@media (prefers-color-scheme: dark){ .chip{background:var(--card2)} }
 .chip .top{display:flex;align-items:center;justify-content:space-between;font-size:20px}
 .chip .nm{font-size:14px;font-weight:500;margin:8px 0;min-height:2.6em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .chip .act{display:block;width:100%;margin-top:10px;padding:6px;border-radius:999px;font-size:12px;font-weight:600;text-align:center}
@@ -187,7 +210,6 @@ nav button[aria-current="page"]::before{
 .seg{display:flex;background:var(--card2);border-radius:9px;padding:2px;margin-bottom:14px}
 .seg button{flex:1;padding:6px;border-radius:7px;font-size:13px;font-weight:500;color:var(--fg)}
 .seg button[aria-pressed="true"]{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.15)}
-@media (prefers-color-scheme: dark){ .seg button[aria-pressed="true"]{background:#636366} }
 
 #sheet{position:fixed;inset:0;z-index:20;display:none;background:rgba(0,0,0,.4)}
 #sheet.open{display:block}
@@ -283,8 +305,7 @@ button:active,[data-act]:active{transform:scale(.96)}
 .hgrid{display:grid;grid-template-rows:repeat(7,var(--cell));grid-auto-flow:column;
        grid-auto-columns:var(--cell);gap:3px;--cell:12px;width:max-content;
        animation:wipe .55s cubic-bezier(.22,1,.36,1) both}
-.hgrid i{border-radius:3px;background:var(--card2);display:block}
-@media (prefers-color-scheme: dark){ .hgrid i{background:#232325} }
+.hgrid i{border-radius:3px;background:var(--well);display:block}
 .hgrid i.off{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
 .hgrid i.l1{background:color-mix(in srgb, var(--hc) 28%, transparent)}
 .hgrid i.l2{background:color-mix(in srgb, var(--hc) 50%, transparent)}
@@ -408,14 +429,10 @@ button:active,[data-act]:active{transform:scale(.96)}
 
 /* Segmented control: an inset well with a raised thumb, so pressed state is a
    surface change and not only a colour change. */
-.seg{box-shadow:inset 0 1px 2px rgba(12,14,20,.06);gap:2px}
+.seg{box-shadow:var(--inset);gap:2px}
 .seg button{font-weight:550;color:var(--dim);transition:color .18s var(--ease),background .18s var(--ease)}
 .seg button[aria-pressed="true"]{color:var(--fg);font-weight:600;
-  background:var(--card);box-shadow:var(--sh1)}
-@media (prefers-color-scheme: dark){
-  .seg{box-shadow:inset 0 1px 2px rgba(0,0,0,.4)}
-  .seg button[aria-pressed="true"]{background:#32363f}
-}
+  background:var(--thumb);box-shadow:var(--sh1)}
 
 .bar{box-shadow:inset 0 1px 2px rgba(12,14,20,.07)}
 .chip{border:var(--hair);box-shadow:var(--sh1)}
@@ -471,6 +488,655 @@ label.f{text-transform:uppercase;letter-spacing:.06em;font-size:var(--t-cap);fon
 .s14 i{flex:1;height:16px;border-radius:3px;background:var(--card2)}
 .s14 i.on{background:var(--hc)}
 .s14 i.off{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
+
+/* ---------- the smart calendar ----------
+   Today read from across a room: a big clock, the week, now and next, the day as a
+   timeline, the program. Same tokens as everything above. */
+:root{--radius:20px}
+@media (min-width:760px){
+  /* Sheets: a centred panel, not a drawer the width of a wall. After the sheet's own
+     transform rules above, so these win. */
+  #sheetBody{left:50%;right:auto;width:min(600px, 100%);bottom:16px;border-radius:20px;
+             transform:translate(-50%, 110%)}
+  #sheet.in #sheetBody{transform:translate(-50%, 0)}
+}
+.quiet *{animation:none !important}
+.sect{font-size:var(--t-cap);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:20px 4px 10px}
+.tl .meta{display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:2px;font-size:12px;color:var(--dim)}
+  background:linear-gradient(90deg, var(--green) var(--p), var(--line) var(--p))}
+
+/* ---------- the shell, refined ----------
+   A borderless header, a floating tab bar. */
+header{border-bottom:0;background:color-mix(in srgb, var(--bg) 70%, transparent)}
+nav{margin:0 auto calc(env(safe-area-inset-bottom) + 10px);width:min(520px, calc(100% - 24px));padding:4px;
+    border-radius:24px;border:var(--hair);box-shadow:var(--sh2);background:var(--glass)}
+nav button{border-radius:18px;padding:7px 0 6px}
+nav button[aria-current="page"]{background:color-mix(in srgb, var(--tint) 13%, transparent)}
+nav button[aria-current="page"]::before{display:none}
+#fab{bottom:calc(84px + env(safe-area-inset-bottom))}
+
+/* The slide names, in the header on Home. */
+.pills{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:var(--well);box-shadow:var(--inset)}
+header .pills button{width:auto;height:auto;background:none}
+.pills button{padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;color:var(--dim);
+  transition:background .3s var(--ease),color .3s var(--ease),box-shadow .3s var(--ease)}
+header .pills button[aria-current="true"],.pills button[aria-current="true"]{background:var(--thumb);color:var(--fg);box-shadow:var(--sh1)}
+@media (max-width:430px){ .pills button{padding:5px 9px;font-size:12px} }
+
+/* ---------- the deck ----------
+   Slides side by side, snapped. Swipe, tap a name, or use the arrow keys. Each slide
+   scales and fades with the swipe itself (a scroll-driven animation), so the motion is
+   tied to your finger rather than played at you. */
+main.deckmode{padding:0;overflow:hidden}
+.sdeck{height:100%;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;
+      overscroll-behavior-x:contain;scrollbar-width:none}
+.sdeck::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;height:100%;overflow-y:auto;scroll-snap-align:start;scroll-snap-stop:always;
+       -webkit-overflow-scrolling:touch}
+.sbody{max-width:1240px;margin:0 auto;padding:18px var(--pad) 110px}
+.shead{margin:4px 2px 22px}
+.shead h1{font-size:clamp(32px, 4vw, 48px);font-weight:750;letter-spacing:-.04em;line-height:1.02;margin:0}
+.shead p{margin:6px 0 0;color:var(--dim);font-size:var(--t-md)}
+.duo{display:grid;gap:0 20px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:900px){ .duo{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);align-items:start} }
+@keyframes deckin{0%{opacity:.2;transform:scale(.88)}50%{opacity:1;transform:none}100%{opacity:.2;transform:scale(.88)}}
+@media (prefers-reduced-motion: no-preference){
+  /* The slide box itself never moves: snapping measures the transformed box, so scaling
+     the slide made the deck stop short and cut its edge off. The slide only names its
+     place on the deck's scroll; what is inside it scales and fades along that timeline. */
+  @supports (animation-timeline: view()){
+    .slide{view-timeline:--slide inline}
+    .slide > *{animation:deckin linear both;animation-timeline:--slide;animation-range:cover;transform-origin:50% 40%}
+  }
+}
+
+/* ---------- Home: the photo third and the calendar two-thirds ---------- */
+.home2{height:100%;display:grid;gap:16px;padding:6px 16px 14px;
+       grid-template-columns:minmax(300px,1fr) minmax(0,2fr);grid-template-rows:minmax(0,1fr)}
+.info{position:relative;overflow:hidden;border-radius:28px;color:#fff;min-height:0;box-shadow:var(--sh2);
+      background:linear-gradient(160deg, #2b3a55, #11151f)}
+#scene{position:absolute;inset:0}
+#scene img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+           transition:opacity 2.4s ease;will-change:opacity,transform}
+#scene img.show{opacity:1}
+@keyframes kb{from{transform:scale(1.03)}to{transform:scale(1.16) translate(-2%, -1.5%)}}
+@media (prefers-reduced-motion: no-preference){ #scene img.show{animation:kb 70s linear both} }
+/* A scrim top and bottom, so white type reads on any photo. */
+#scene::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg, rgba(0,0,0,.52) 0%, rgba(0,0,0,.14) 36%, rgba(0,0,0,.22) 62%, rgba(0,0,0,.7) 100%)}
+.scap{position:absolute;left:20px;right:20px;bottom:15px;z-index:2;display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+      font-size:12px;color:rgba(255,255,255,.9);text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.scap span{color:rgba(255,255,255,.62)}
+.info-body{position:relative;z-index:1;height:100%;overflow-y:auto;display:flex;flex-direction:column;gap:12px;
+           padding:20px 20px 52px;text-shadow:0 1px 14px rgba(0,0,0,.35);scrollbar-width:none}
+.ib-top{display:flex;gap:8px;justify-content:flex-end;margin-bottom:-14px}
+.ib-time{font-size:clamp(64px, 7.4vw, 124px);font-weight:300;letter-spacing:-.055em;line-height:.9;
+         font-variant-numeric:tabular-nums}
+.ib-time small{font-size:.26em;font-weight:500;letter-spacing:0;margin-left:.22em;opacity:.85}
+.ib-date{font-size:clamp(20px, 1.8vw, 27px);font-weight:600;letter-spacing:-.02em}
+.ib-greet{font-size:14px;opacity:.88;margin-top:-8px}
+.glass{background:rgba(255,255,255,.14);-webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);
+       border:1px solid rgba(255,255,255,.22);border-radius:18px;color:#fff;text-shadow:none}
+.gbtn{width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.wx{display:flex;align-items:center;gap:14px;width:100%;padding:13px 16px;text-align:left}
+.wxi{font-size:40px;line-height:1}
+.wxt{font-size:34px;font-weight:300;letter-spacing:-.03em;margin-right:8px}
+.wxl{font-size:15px;font-weight:600}
+.wx small,.upn small,.tt small{display:block;font-size:12px;opacity:.82}
+.wxd{display:grid;grid-template-columns:repeat(3,1fr);padding:10px 6px;text-align:center}
+.wxd span{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:21px}
+.wxd b{font-size:14px;font-weight:600}
+.wxd small{font-size:11px;opacity:.75}
+.sunrow{font-size:13px;opacity:.92;padding:0 4px}
+.tide{padding:12px 16px}
+.ttl{flex:1;font-size:14px;font-weight:600}
+.tt{text-align:right}
+.tt b{display:block;font-size:15px;font-weight:600}
+.tline{display:block;width:100%;height:40px;margin-top:8px}
+.upn{display:flex;flex-direction:column;gap:1px;width:100%;padding:12px 16px;text-align:left}
+.upn b{font-size:16px;font-weight:600;margin-bottom:5px}
+.upn b:last-child{margin-bottom:0}
+
+.calpane{margin:0;display:flex;flex-direction:column;min-height:0;padding:16px 14px 8px;border-radius:28px}
+.cp-top{display:flex;align-items:center;gap:6px;margin:0 4px 12px}
+.cp-month{margin:0;font-size:clamp(22px, 2.2vw, 30px);font-weight:700;letter-spacing:-.035em}
+.tg{flex:1;min-height:0;display:flex;flex-direction:column;--days:7}
+.tg-head,.tg-body{display:grid;grid-template-columns:44px repeat(var(--days), minmax(0,1fr))}
+.tg-h{min-width:0;padding:0 3px 8px;border-bottom:var(--hair)}
+.tg-d{display:flex;align-items:center;gap:6px;width:100%;padding:3px 4px;border-radius:10px}
+.tg-d small{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--dim)}
+.tg-d b{font-size:21px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+        min-width:34px;height:34px;border-radius:17px;display:inline-flex;align-items:center;justify-content:center}
+.tg-h.today .tg-d b{background:var(--tint);color:#fff}
+.tg-h.today .tg-d small{color:var(--tint)}
+.tg-any{display:flex;flex-direction:column;gap:3px;margin-top:5px;min-height:20px}
+.any{max-width:100%;padding:2px 7px;border-radius:6px;font-size:11px;text-align:left;
+     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+     background:color-mix(in srgb, var(--hc) 18%, var(--card));box-shadow:inset 2px 0 0 var(--hc)}
+.any.done{opacity:.5;text-decoration:line-through}
+.any.more{background:none;box-shadow:none;color:var(--dim)}
+.tg-body{flex:1;min-height:0}
+.tg-hours{position:relative}
+.tg-hours span{position:absolute;right:8px;transform:translateY(-50%);font-size:11px;color:var(--dim);
+               white-space:nowrap;font-variant-numeric:tabular-nums}
+.tg-col{position:relative;min-width:0;border-left:var(--hair);
+  background-image:repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px calc(100% / var(--hours)))}
+.tg-col.today{background-color:color-mix(in srgb, var(--tint) 5%, transparent)}
+.band{position:absolute;left:0;right:0;overflow:hidden;border-top:1px dashed var(--line);
+      background:color-mix(in srgb, var(--fg) 3.5%, transparent)}
+.band span{position:absolute;right:4px;top:2px;font-size:10px;color:var(--dim);white-space:nowrap;opacity:.75}
+.ev{position:absolute;z-index:1;display:flex;flex-direction:column;align-items:flex-start;overflow:hidden;margin-left:2px;
+    padding:3px 6px;border-radius:8px;font-size:11.5px;line-height:1.25;text-align:left;
+    background:color-mix(in srgb, var(--hc) 22%, var(--card));border-left:3px solid var(--hc);
+    box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.ev b{max-width:100%;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev small{font-size:10.5px;color:var(--dim)}
+.ev.done{opacity:.5}
+.ev.done b{text-decoration:line-through}
+@media (hover:hover) and (pointer:fine){ .ev:hover{z-index:3;filter:brightness(1.04);box-shadow:var(--sh2)} }
+.nowl{position:absolute;left:-1px;right:0;z-index:2;height:2px;background:var(--red);pointer-events:none}
+.nowl::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:4px;background:var(--red)}
+
+/* Narrower screens show fewer days; a phone stacks the photo over the calendar. */
+@media (max-width:1279px){ .tg{--days:5} .tg .x5{display:none} }
+@media (max-width:759px){
+  .home2{grid-template-columns:minmax(0,1fr);grid-template-rows:none;height:auto;padding:6px 12px 110px}
+  .info{min-height:min(76vh, 640px)}
+  .tg{--days:3}
+  .tg .x3{display:none}
+  .tg-body{flex:none;height:calc(var(--hours) * 46px)}
+}
+
+/* ---------- transitions ----------
+   A tab change hands over rather than cross-fades: the old page fades out first, then the
+   new one rises in, so two different layouts are never on screen at once (a straight
+   cross-fade laid the old title over the new slide names and ghosted the cards). The header
+   and tab bar have names of their own, so they stay put and only their contents change.
+   #app > header, not header: the sheet has a header too, and a name used twice cancels
+   the whole transition. A theme change washes in as a circle from where you tapped. */
+#app > header{view-transition-name:p1-header}
+#tabs{view-transition-name:p1-tabs}
+#fab{view-transition-name:p1-fab}
+::view-transition-group(*){animation-duration:.38s;animation-timing-function:cubic-bezier(.22,1,.36,1)}
+::view-transition-old(root){animation:vt-out .14s ease-in both}
+::view-transition-new(root){animation:vt-in .34s .1s cubic-bezier(.22,1,.36,1) both}
+/* The bars stay live through a tab change, so their markers can be seen gliding. */
+::view-transition-old(p1-header),::view-transition-old(p1-tabs){display:none}
+::view-transition-new(p1-header),::view-transition-new(p1-tabs){animation:none}
+@keyframes vt-out{to{opacity:0}}
+@keyframes vt-fade{from{opacity:0}}
+@keyframes vt-in{from{opacity:0;transform:translateY(10px)}}
+/* The theme circle covers the whole screen, header and tab bar included. */
+html.vt-theme #app > header,html.vt-theme #tabs,html.vt-theme #fab{view-transition-name:none}
+html.vt-theme::view-transition-old(root){animation:none}
+html.vt-theme::view-transition-new(root){animation:reveal .8s cubic-bezier(.22,1,.36,1)}
+@keyframes reveal{from{clip-path:circle(0 at var(--vx, 50%) var(--vy, 0))}to{clip-path:circle(150vmax at var(--vx, 50%) var(--vy, 0))}}
+
+.nncard{padding:0;overflow:hidden}
+.nn{padding:var(--pad) var(--pad) var(--pad) calc(var(--pad) - 4px);border-left:4px solid var(--hc)}
+.nn + .nn{border-top:var(--hair)}
+.nnl{display:block;font-size:var(--t-cap);font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+     color:var(--hc);margin-bottom:6px}
+.nnt{font-size:var(--t-xl);font-weight:650;letter-spacing:-.02em;line-height:1.2}
+.nn .bar i{background:var(--hc)}
+
+.tl{list-style:none;margin:0;padding:0}
+.tl li{display:flex;align-items:flex-start;gap:12px;padding:9px 0}
+.tl li + li{border-top:1px solid var(--line)}
+.tlt{flex:0 0 46px;display:flex;flex-direction:column;font-size:var(--t-sm);font-weight:600;padding-top:2px;
+     font-variant-numeric:tabular-nums}
+.tlt small{font-size:11px;font-weight:500;color:var(--dim)}
+.tlb{flex:1;min-width:0;border-left:3px solid var(--hc);padding:1px 0 1px 10px}
+.tl li.blk .tlb{border-left-style:dotted;color:var(--dim)}
+.tl li.done .tlb{opacity:.55}
+.tl li.now .tlb{background:color-mix(in srgb, var(--hc) 13%, transparent);border-radius:0 10px 10px 0;padding:7px 10px}
+.tl li.nowline{align-items:center;gap:8px;padding:3px 0;color:var(--red);font-size:11px;font-weight:700;border-top:0}
+.tl li.nowline + li{border-top:0}
+.tl li.nowline::after{content:"";flex:1;height:2px;border-radius:1px;background:var(--red)}
+.tk{flex:0 0 30px;width:30px;height:30px;border-radius:15px;border:2px solid var(--hc);position:relative;
+    transition:background .18s var(--ease)}
+.tk.big{flex-basis:44px;width:44px;height:44px;border-radius:22px}
+.tk.on{background:var(--hc);border-color:var(--hc)}
+.tk.on::after,.tk:active::after{content:"";position:absolute;left:30%;top:22%;width:28%;height:42%;
+    border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+.earlier summary{cursor:pointer;list-style:none;color:var(--dim);font-size:var(--t-sm);font-weight:600;padding:6px 0}
+.earlier summary::-webkit-details-marker{display:none}
+.earlier summary::before{content:"▸ "}
+.earlier[open] summary::before{content:"▾ "}
+.tlh{font-size:var(--t-cap);font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin:14px 0 2px}
+
+.prog{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:11px 0}
+.prog + .prog{border-top:1px solid var(--line)}
+.rw{position:relative;display:flex;flex:0 0 auto}
+.rw b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+      font-variant-numeric:tabular-nums}
+
+    padding:6px 8px;border-radius:8px;font-size:12.5px;line-height:1.3;
+    background:color-mix(in srgb, var(--hc) 16%, var(--card));border-left:3px solid var(--hc)}
+
+/* Display mode: nothing but the day. */
+body.kiosk header,body.kiosk nav,body.kiosk #fab{display:none}
+body.kiosk #app{max-width:none}
+body.kiosk main{padding-top:calc(env(safe-area-inset-top) + 18px)}
+body.kiosk .ib-time{font-size:clamp(80px, 9vw, 170px)}
+
+/* ---------- quiet luxury, and everything fitted to the screen ----------
+   Last in the sheet on purpose: it restyles what is above without editing it.
+   Serif for what you look at, a geometric sans for what you read, hairlines instead of
+   shadows, muted colour, generous air. On a tablet or wall every slide is exactly one
+   screen: the columns stretch to the bottom, the longest card scrolls inside itself, and
+   type scales with the height of the display rather than sitting at phone sizes. */
+
+/* Type */
+h1,h2,h3{font-weight:500}
+header h1{font-family:var(--serif);font-size:23px;font-weight:500;letter-spacing:.01em}
+.card h2{font-size:10.5px;font-weight:500;letter-spacing:.18em;color:var(--dim);margin-bottom:16px}
+.card h2 svg{opacity:.7}
+.heroNum,.big,.wizard h2,.shead h1,.cp-month,.nnt,.wxt,.ib-time,.ib-date,.tg-d b{font-family:var(--serif)}
+.heroNum{font-weight:400;letter-spacing:-.01em;font-size:clamp(46px, 7vh, 84px)}
+.heroDelta,.sub,.hint,.meta{letter-spacing:.01em}
+.sect,label.f,.nnl,.tlh,.tg-d small,.card.hero .sub{letter-spacing:.18em;font-weight:500}
+.nnt{font-size:clamp(24px, 3.2vh, 34px);font-weight:500;letter-spacing:0;line-height:1.15}
+.nnl{font-size:10.5px;color:var(--dim)}
+
+/* Surfaces: hairlines, almost no shadow */
+.card{border:1px solid var(--line);box-shadow:none;padding:clamp(16px, 2.2vh, 24px)}
+.card.hero{background:var(--card)}
+.chip,.opt,.banner,.coachcard,.intent{box-shadow:none}
+.coachcard,.coachcard.warn,.coachcard.good{border-left-width:1px}
+.coachcard{border-left-color:var(--line)}
+.coachcard .cico{color:var(--tint)}
+.seg{background:transparent;border:1px solid var(--line);box-shadow:none;border-radius:999px}
+.seg button{border-radius:999px;font-weight:500;letter-spacing:.04em}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg);box-shadow:none}
+.bar{background:var(--line);box-shadow:none;height:4px}
+.bar i{border-radius:2px}
+input,select,textarea{background:var(--card);border-color:var(--line);border-radius:12px}
+
+/* Buttons: ink on paper */
+.btn{background:var(--fg);color:var(--bg);box-shadow:none;border-radius:999px;font-weight:500;letter-spacing:.06em}
+.btn.sec{background:transparent;color:var(--fg);border:1px solid var(--line);box-shadow:none}
+.btn.danger{background:transparent;color:var(--red);border:1px solid var(--line);box-shadow:none}
+.mini{background:transparent;border:1px solid var(--line);color:var(--fg);border-radius:999px;font-weight:500;letter-spacing:.03em}
+#fab{width:52px;height:52px;background:var(--fg);color:var(--bg);box-shadow:var(--sh2);font-size:22px}
+@media (hover:hover) and (pointer:fine){ #fab:hover{box-shadow:var(--sh3)} .mini:hover{background:var(--well)} }
+.tickbtn{border:1px solid color-mix(in oklab, var(--hc) 60%, var(--dim));background:transparent}
+.tickbtn.on{background:color-mix(in oklab, var(--hc) 70%, var(--dim));border-color:transparent}
+
+/* Header, slide names and the tab bar */
+header{padding-top:calc(env(safe-area-inset-top) + 8px);padding-bottom:8px}
+header button{background:transparent;border:1px solid var(--line)}
+.pills{background:transparent;border:1px solid var(--line);box-shadow:none;padding:3px}
+header .pills button,.pills button{font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;padding:6px 15px}
+header .pills button[aria-current="true"],.pills button[aria-current="true"]{background:var(--fg);color:var(--bg);box-shadow:none}
+nav{box-shadow:var(--sh2);border-color:var(--line)}
+nav button{font-size:9.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;gap:4px}
+nav button .ic{font-size:20px}
+nav button[aria-current="page"]{background:transparent;color:var(--fg)}
+nav button[aria-current="page"]::after{content:"";position:absolute;bottom:2px;left:50%;width:4px;height:4px;margin-left:-2px;
+  border-radius:2px;background:var(--tint)}
+@media (max-width:430px){ header .pills button,.pills button{padding:5px 8px;letter-spacing:.08em;font-size:10px} }
+
+/* Colour in the schedule is a hint of each habit's hue, never the full saturation */
+.ev,.any,.tlb,.nn,.wi,.slot,.tk{--hm:color-mix(in oklab, var(--hc) 62%, #8a8178)}
+.ev{background:color-mix(in oklab, var(--hm) 13%, var(--card));border-left:2px solid var(--hm);border-radius:6px;box-shadow:none}
+.any{background:color-mix(in oklab, var(--hm) 12%, var(--card));box-shadow:inset 2px 0 0 var(--hm)}
+.tlb{border-left:2px solid var(--hm)}
+.nn{border-left:2px solid var(--hm)}
+.nnl{color:var(--hm)}
+.tk{border:1.5px solid var(--hm)}
+.tk.on{background:var(--hm);border-color:var(--hm)}
+.slot{background:color-mix(in oklab, var(--hm) 12%, transparent);border-left:2px solid var(--hm)}
+.tl li.now .tlb{background:color-mix(in oklab, var(--hm) 10%, transparent)}
+.tl li.nowline,.tl li.nowline::after{color:var(--tint);background:transparent}
+.tl li.nowline::after{background:var(--tint);height:1px}
+.nowl{background:var(--tint);height:1px}
+.nowl::before{background:var(--tint)}
+
+/* ---------- the deck fills the screen ---------- */
+/* The wrapper between #main and the deck had no height, so the deck grew to its content
+   and the bottom of every slide was cut off. */
+main.deckmode > div{height:100%}
+.shead{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 20px;margin:0 2px clamp(12px, 2.4vh, 26px)}
+.shead h1{font-weight:400;font-size:clamp(36px, 5.6vh, 64px);letter-spacing:-.01em;line-height:1}
+.shead p{margin:0;font-size:13px;letter-spacing:.04em}
+
+/* Tablet and up, when there is height to work with: one screen per slide, no gaps. */
+@media (min-width:900px) and (min-height:560px){
+  .sbody{height:100%;max-width:none;display:flex;flex-direction:column;
+         padding:clamp(12px, 2.4vh, 30px) clamp(18px, 3vw, 56px) clamp(12px, 2vh, 22px)}
+  .duo{flex:1;min-height:0;align-items:stretch;gap:clamp(14px, 1.6vw, 26px)}
+  .duo > div{display:flex;flex-direction:column;gap:clamp(12px, 1.6vh, 18px);min-height:0}
+  .duo > div > .card{margin:0;flex:0 1 auto;min-height:0;overflow:auto}
+  /* The last card in each column takes the rest of the height. */
+  .duo > div > .card:last-child{flex:1 1 0}
+  .duo .card{scrollbar-width:thin}
+  /* Rows spread over the height they are given instead of leaving a hole underneath. */
+  .duo .card:has(> .prog),.duo .card:has(> .track){display:flex;flex-direction:column}
+  .duo .card > .prog,.duo .card > .track{flex:1 0 auto}
+  /* Today's habits become a grid of tiles that fills its card. */
+  .duo .card:has(> .strip){display:flex;flex-direction:column}
+  .duo .card > .strip{flex:1;display:grid;grid-template-columns:repeat(auto-fill, minmax(170px, 1fr));grid-auto-rows:minmax(150px, 1fr);
+    gap:12px;margin:0;padding:0;overflow:visible}
+  .duo .strip .chip{display:flex;flex-direction:column;justify-content:space-between}
+  /* The score chart grows into its card. */
+  .duo .card.hero{display:flex;flex-direction:column}
+  .duo .card.hero .scrub{flex:1;min-height:120px;height:100%}
+}
+
+/* ---------- Home: the info third ---------- */
+.home2{padding:clamp(6px, 1vh, 12px) clamp(12px, 1.4vw, 22px) clamp(10px, 1.6vh, 18px);gap:clamp(12px, 1.2vw, 20px)}
+.info{border-radius:24px;box-shadow:var(--sh3)}
+.info-body{padding:clamp(18px, 2.6vh, 30px) clamp(18px, 1.8vw, 30px) clamp(40px, 5vh, 54px);gap:clamp(6px, 1vh, 12px);
+           justify-content:flex-start}
+.ib-top{position:absolute;top:clamp(14px, 2vh, 22px);right:clamp(14px, 1.4vw, 22px);margin:0;z-index:2}
+.ib-time{font-weight:300;font-size:clamp(64px, 15vh, 190px);letter-spacing:-.025em;line-height:.82;margin-top:clamp(4px, 1vh, 14px)}
+.ib-time small{font-family:var(--sans);font-size:.15em;font-weight:400;letter-spacing:.2em;margin-left:.35em;vertical-align:.2em}
+.ib-date{font-weight:500;font-size:clamp(22px, 3.4vh, 40px);letter-spacing:.005em;line-height:1.1}
+.ib-greet{margin-top:0;font-size:clamp(12px, 1.5vh, 15px);letter-spacing:.12em;text-transform:uppercase;opacity:.8}
+.ib-cards{margin-top:auto;display:flex;flex-direction:column;gap:clamp(8px, 1.2vh, 12px)}
+.glass{background:rgba(18,14,10,.28);border:1px solid rgba(255,255,255,.16);border-radius:18px;
+       -webkit-backdrop-filter:blur(22px) saturate(120%);backdrop-filter:blur(22px) saturate(120%)}
+.gbtn{width:36px;height:36px}
+.gbtn .i{width:18px;height:18px;stroke-width:1.4}
+.wx{display:flex;flex-direction:column;align-items:stretch;gap:clamp(8px, 1.2vh, 12px);padding:clamp(12px, 1.7vh, 18px) clamp(14px, 1.4vw, 20px)}
+.wxnow{display:flex;align-items:center;gap:14px}
+.wxtx{flex:1;min-width:0}
+.wxi .i,.wxg{width:clamp(34px, 5vh, 52px);height:clamp(34px, 5vh, 52px);stroke-width:1.1}
+.wxt{font-weight:300;font-size:clamp(32px, 5vh, 56px);letter-spacing:-.01em;line-height:1;margin-right:6px}
+.wxl{font-size:clamp(13px, 1.6vh, 16px);font-weight:500;letter-spacing:.04em}
+.wxd{display:grid;grid-template-columns:repeat(3, 1fr);padding-top:clamp(8px, 1.2vh, 12px);border-top:1px solid rgba(255,255,255,.14);text-align:center}
+.wxd span{display:flex;flex-direction:column;align-items:center;gap:2px}
+.wxd .wxg{width:clamp(20px, 2.8vh, 28px);height:clamp(20px, 2.8vh, 28px);stroke-width:1.3}
+.wxd b{font-size:clamp(13px, 1.6vh, 16px);font-weight:500}
+.wxd small{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+.sunrow{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;letter-spacing:.04em;opacity:.9}
+.wxs{width:16px;height:16px;stroke-width:1.4}
+.sunrow .wxs + .wxs,.sunrow .wxs:nth-of-type(2){margin-left:10px}
+.tide{padding:clamp(10px, 1.5vh, 16px) clamp(14px, 1.4vw, 20px)}
+.ttl{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;letter-spacing:.16em;text-transform:uppercase}
+.tt b{font-size:clamp(14px, 1.7vh, 17px);font-weight:500}
+.tline{height:clamp(26px, 4vh, 44px)}
+.upn{padding:clamp(10px, 1.5vh, 16px) clamp(14px, 1.4vw, 20px)}
+.upn small{letter-spacing:.14em;text-transform:uppercase;font-size:10.5px}
+.upn b{font-family:var(--serif);font-size:clamp(18px, 2.4vh, 24px);font-weight:500;line-height:1.2}
+/* The photo credit sits in the panel's flow, under the cards, so it can never overlap them. */
+.scap{position:static;font-size:11.5px;letter-spacing:.04em;margin-top:2px}
+.info .info-body{padding-bottom:clamp(12px, 1.8vh, 18px)}
+/* Short screens: the same cards, closer together. */
+@media (min-width:760px) and (max-height:880px){
+  .ib-time{font-size:clamp(52px, 10vh, 120px)}
+  .wx,.tide,.upn{padding-top:9px;padding-bottom:9px}
+  .wx{gap:6px}
+  .wxd{padding-top:6px}
+  .wxd .wxg{width:20px;height:20px}
+  .tline{height:24px;margin-top:4px}
+  .upn b{font-size:17px;margin-bottom:2px}
+}
+
+/* ---------- Home: the calendar two-thirds ---------- */
+.calpane{border-radius:24px;padding:clamp(14px, 2vh, 24px) clamp(12px, 1.2vw, 20px) clamp(8px, 1vh, 12px);overflow:hidden}
+.cp-top{margin:0 4px clamp(8px, 1.4vh, 16px)}
+.cp-month{font-weight:500;font-size:clamp(26px, 4vh, 44px);letter-spacing:0}
+.tg{flex:1 1 0}
+.tg-head,.tg-body{grid-template-columns:clamp(40px, 3.4vw, 54px) repeat(var(--days), minmax(0,1fr))}
+.tg-d b{font-weight:500;font-size:clamp(20px, 3vh, 32px);min-width:clamp(32px, 4.4vh, 46px);height:clamp(32px, 4.4vh, 46px);border-radius:999px}
+.tg-h.today .tg-d b{background:var(--fg);color:var(--bg)}
+.tg-h.today .tg-d small{color:var(--fg)}
+.tg-d small{font-size:clamp(10px, 1.2vh, 12px)}
+.tg-body{flex:1 1 0;min-height:0}
+.tg-hours span{font-size:clamp(10px, 1.15vh, 12.5px);letter-spacing:.04em}
+.tg-col{background-image:repeating-linear-gradient(to bottom, color-mix(in oklab, var(--line) 70%, transparent) 0 1px, transparent 1px calc(100% / var(--hours)))}
+.tg-col.today{background-color:color-mix(in oklab, var(--tint) 4%, transparent)}
+.band{border-top:1px dotted var(--line);background:color-mix(in oklab, var(--fg) 2.5%, transparent)}
+.ev{font-size:clamp(10.5px, 1.25vh, 13.5px);padding:clamp(2px, .35vh, 5px) clamp(5px, .5vw, 8px)}
+.ev b{font-weight:500}
+.ev small{font-size:.88em}
+.any{font-size:clamp(10.5px, 1.2vh, 12.5px);border-radius:5px}
+
+/* Phones keep natural scrolling; the calendar gets a fixed hour height there. */
+@media (max-width:759px){
+  .info{min-height:calc(100dvh - 170px)}
+  /* The panel grows with what is in it, and leaves room for a credit that wraps. */
+  .info .info-body{height:auto;min-height:calc(100dvh - 170px);padding-bottom:18px}
+  .ib-time{font-size:clamp(72px, 22vw, 110px)}
+}
+/* Display mode: no header or tab bar, so the clock can be bigger still. */
+body.kiosk .ib-time{font-size:clamp(80px, 18vh, 230px)}
+
+
+/* Fit fixes */
+/* Cormorant's default figures are old-style (the 4 and 9 drop below the line); a clock
+   wants lining figures that sit on it, and columns of times want them all one width. */
+.ib-time,.ib-date,.tg-d b,.wxt,.heroNum,.cp-month,.nnt,.upn b,.big,.shead h1{font-variant-numeric:lining-nums tabular-nums}
+/* The month is a title, not one of the small card labels. */
+.calpane h2.cp-month{display:block;margin:0;font-family:var(--serif);font-size:clamp(26px, 4vh, 44px);font-weight:500;
+  letter-spacing:0;text-transform:none;color:var(--fg)}
+.ib-time{font-size:clamp(56px, 11.5vh, 180px);line-height:.86}
+.info-body{padding-bottom:clamp(36px, 4.4vh, 50px)}
+.ib-cards{gap:clamp(6px, 1vh, 12px)}
+.wxtx .sunrow{justify-content:flex-start;margin-top:2px;font-size:12px;opacity:.85}
+@media (min-width:900px) and (min-height:560px){
+  /* Only the last card in a column gives up height; the rest keep their content whole. */
+  .duo > div{overflow:auto;scrollbar-width:none}
+  .duo > div > .card{flex:0 0 auto}
+  .duo > div > .card:last-child{flex:1 1 0;min-height:160px}
+}
+
+
+/* ---------- the two bars ----------
+   One language top and bottom: a hairline track on frosted paper, small tracked capitals,
+   and a single ink marker that glides to the open item. The bottom bar runs the full
+   width and shares it evenly; on a phone its labels sit under the icons. */
+.pills,.tabtrack{position:relative;isolation:isolate}
+.thumb{position:absolute;top:4px;bottom:4px;left:0;width:0;z-index:-1;border-radius:999px;background:var(--fg);opacity:0;
+  pointer-events:none;box-shadow:0 6px 18px -8px rgba(30,22,12,.45);
+  transition:transform .55s cubic-bezier(.22,1,.36,1),width .55s cubic-bezier(.22,1,.36,1),opacity .3s ease}
+header{display:flex;align-items:center;gap:12px}
+header .pills{margin:0 auto;padding:4px;border:1px solid var(--line);background:var(--glass);
+  -webkit-backdrop-filter:blur(20px) saturate(140%);backdrop-filter:blur(20px) saturate(140%);box-shadow:var(--sh1)}
+header .pills .thumb{top:4px;bottom:4px}
+header .pills button,.pills button{position:relative;padding:8px clamp(12px, 1.6vw, 22px);border-radius:999px;background:transparent;border:0;
+  font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);
+  transition:color .4s ease}
+header .pills button[aria-current="true"],.pills button[aria-current="true"]{background:transparent;color:var(--bg);box-shadow:none}
+
+nav{width:auto;margin:0 clamp(12px, 1.4vw, 22px) calc(env(safe-area-inset-bottom) + 12px);padding:4px;border-radius:999px;
+  border:1px solid var(--line);background:var(--glass);box-shadow:var(--sh2);
+  -webkit-backdrop-filter:blur(20px) saturate(140%);backdrop-filter:blur(20px) saturate(140%)}
+.tabtrack{display:flex;width:100%;gap:2px}
+nav button,nav button[aria-current="page"]{flex:1 1 0;flex-direction:row;justify-content:center;align-items:center;gap:10px;
+  padding:12px 8px;border-radius:999px;background:transparent;font-size:11px;font-weight:500;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--dim);transition:color .4s ease}
+nav button .ic{font-size:17px;line-height:0}
+nav button .ic .i{stroke-width:1.5}
+nav button[aria-current="page"]{color:var(--bg)}
+nav button[aria-current="page"]::before,nav button[aria-current="page"]::after{display:none}
+@media (hover:hover) and (pointer:fine){
+  nav button:not([aria-current="page"]):hover,header .pills button:not([aria-current="true"]):hover{color:var(--fg)}
+}
+#fab{bottom:calc(env(safe-area-inset-bottom) + 80px)}
+@media (max-width:640px){
+  nav{border-radius:26px}
+  nav .thumb{border-radius:22px}
+  nav button,nav button[aria-current="page"]{flex-direction:column;gap:4px;padding:8px 2px 7px;font-size:9px;letter-spacing:.1em}
+  nav button .ic{font-size:19px}
+  header .pills button,.pills button{padding:6px 9px;font-size:10px;letter-spacing:.08em}
+}
+/* A workspace's title sits where a slide's does. */
+#main > div > .shead{margin-top:4px}
+
+
+/* ---------- workspaces in halves and thirds ---------- */
+@media (min-width:900px) and (min-height:560px){
+  main.wsmode{padding:0;overflow:hidden}
+  #main > div.ws{max-width:none;height:100%;display:flex;flex-direction:column;gap:clamp(10px, 1.4vh, 16px);
+    padding:clamp(12px, 2.4vh, 30px) clamp(18px, 3vw, 56px) clamp(12px, 2vh, 22px)}
+  .ws > .shead{margin-bottom:0}
+  .ws > :not(.bcols){flex:none}
+  .ws > .seg,.ws > .legend{width:100%;max-width:820px;margin:0}
+  .ws > .row{width:100%;margin:0}
+  .bcols{flex:1 1 0;min-height:0;display:grid;grid-template-columns:repeat(var(--n), minmax(0, 1fr));gap:clamp(14px, 1.6vw, 26px)}
+  .bcol{display:flex;flex-direction:column;gap:clamp(12px, 1.6vh, 18px);min-height:0;overflow:auto;scrollbar-width:thin;
+    padding-bottom:2px}
+  .bcol > .card,.bcol > .unit{margin:0;flex:none}
+  .unit{display:flex;flex-direction:column;gap:10px}
+  .unit > .seg{margin:0}
+  /* The last card in each column takes what is left, so every column ends at the bottom. */
+  .bcol > :last-child{flex:1 0 auto}
+  .bcol > .unit:last-child > .card{flex:1 0 auto}
+  .bfoot{display:flex;gap:12px;flex-wrap:wrap}
+  .bfoot > .btn{width:auto;margin:0;padding:11px 26px}
+  .bfoot > .inline{width:100%}
+  /* Habits: an even grid of cards across the whole width; the page scrolls. */
+  #main > div.wsgrid{max-width:none;display:grid;grid-template-columns:repeat(auto-fill, minmax(min(360px, 100%), 1fr));
+    gap:clamp(14px, 1.6vw, 24px);align-items:stretch;padding:clamp(12px, 2.4vh, 30px) clamp(18px, 3vw, 56px) 30px}
+  .wsgrid > :not(.card){grid-column:1 / -1;margin:0}
+  .wsgrid > .seg{max-width:820px}
+  .wsgrid > .card{margin:0}
+  main.wspad{padding:0}
+}
+
+
+/* ---------- windows ---------- */
+@media (min-width:900px) and (min-height:560px){
+  /* A centred window that settles in from slightly small, rather than a drawer from below. */
+  #sheet{background:rgba(20,15,10,.34);-webkit-backdrop-filter:blur(6px) saturate(110%);backdrop-filter:blur(6px) saturate(110%)}
+  #sheetBody{top:50%;bottom:auto;left:50%;right:auto;width:min(720px, calc(100vw - 48px));max-height:min(88vh, 980px);
+    border-radius:28px;border:1px solid var(--line);padding:0 clamp(18px, 2vw, 30px) clamp(18px, 2.4vh, 28px);
+    transform:translate(-50%, -48%) scale(.97);opacity:0;transition:transform .42s cubic-bezier(.22,1,.36,1),opacity .3s ease}
+  #sheet.in #sheetBody{transform:translate(-50%, -50%);opacity:1}
+  #sheetBody .grab{display:none}
+  #sheetBody header{position:sticky;top:0;z-index:2;padding:clamp(14px, 2vh, 22px) 0 clamp(12px, 1.6vh, 18px);margin-bottom:4px;
+    background:color-mix(in srgb, var(--bg) 92%, transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+  #sheetBody header h1{font-family:var(--serif);font-size:clamp(26px, 3.4vh, 36px);font-weight:400;letter-spacing:0;text-align:left;
+    order:-1;flex:1;margin:0}
+  #sheetBody header button{width:auto;height:auto;padding:8px 18px;border-radius:999px;border:1px solid var(--line);
+    background:transparent;font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--fg)}
+  #sheetBody header > span{display:none}
+  /* A window of cards: wide, a fixed height, and the cards dealt into columns. */
+  #sheetBody.sheet-board{width:min(1360px, calc(100vw - 64px));height:min(88vh, 1040px);max-height:none;
+    display:flex;flex-direction:column;overflow:hidden}
+  .sheet-board #sheetInner{flex:1;min-height:0;display:flex;flex-direction:column;gap:clamp(10px, 1.4vh, 16px)}
+  .sheet-board #sheetInner > :not(.bcols){flex:none;margin:0}
+  .sheet-board #sheetInner > .bfoot .btn{margin:0}
+  .sheet-board .card{margin:0}
+  /* A form: a compact panel; its controls keep the room they need, nothing stretched. */
+  #sheetBody.sheet-form{overflow-y:auto}
+}
+
+
+@media (min-width:900px) and (min-height:560px){
+  .bfoot .btn,.bfoot .mini{white-space:nowrap}
+  /* A long form: a wider window, two balanced columns, the actions across the foot. */
+  #sheetBody.sheet-form2{width:min(1120px, calc(100vw - 64px));overflow-y:auto}
+  .sheet-form2 #sheetInner{column-count:2;column-gap:clamp(28px, 3vw, 48px)}
+  .sheet-form2 .fld{break-inside:avoid;padding-bottom:6px}
+  .sheet-form2 .fld > label.f:first-child{margin-top:8px}
+  .sheet-form2 #sheetInner > :not(.fld){column-span:all}
+  .sheet-form2 #sheetInner > .btn{display:inline-block;width:auto;min-width:200px;margin:18px 12px 0 0;padding:12px 30px}
+}
+
+
+/* ---------- glyphs ----------
+   Line icons in place of emoji: a light stroke, in the muted hue of whatever they belong to
+   (a habit, an event), the accent for the companion, and a quiet grey everywhere else. */
+.i.g{stroke-width:1.5;color:var(--hm, var(--dim))}
+.hico{--hm:color-mix(in oklab, var(--hc) 62%, #8a8178);color:var(--hm);background:color-mix(in oklab, var(--hm) 12%, transparent)}
+.hico .i.g{width:20px;height:20px}
+.cico .i.g{color:var(--tint);width:22px;height:22px}
+.chip .top .i.g{width:22px;height:22px}
+.picks button .i.g{width:20px;height:20px;color:var(--fg)}
+.picks button[aria-pressed="true"]{outline:1px solid var(--fg);outline-offset:2px}
+.tick .i.g{width:20px;height:20px}
+.opt .i.g{width:22px;height:22px;color:var(--tint)}
+.wizard .art .i{width:56px;height:56px;stroke-width:1.1;color:var(--tint)}
+.inbox-acts .i.g,button .i.g{vertical-align:-.15em}
+/* The tick: a hairline ring; done, it fills with ink and shows a check. */
+.tm{display:inline-block;position:relative;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--dim);
+  vertical-align:middle;transition:background .2s ease,border-color .2s ease}
+.tm.on{background:var(--fg);border-color:var(--fg)}
+.tm.on::after{content:"";position:absolute;left:5px;top:2px;width:4px;height:8px;border:solid var(--bg);border-width:0 1.6px 1.6px 0;transform:rotate(45deg)}
+
+
+/* A habit tile speaks in its habit's muted hue: the icon, the bar, and a quiet action pill
+   that fills with that hue once the day's check-in is done. */
+.chip{--hm:color-mix(in oklab, var(--hc) 62%, #8a8178)}
+.chip .top .i.g{color:var(--hm)}
+.chip .bar i{background:var(--hm)}
+.chip .act{background:color-mix(in oklab, var(--hm) 12%, transparent);color:color-mix(in oklab, var(--hm) 80%, var(--fg));
+  border:1px solid color-mix(in oklab, var(--hm) 30%, transparent);font-weight:500;letter-spacing:.06em}
+.chip .act.on{background:var(--hm);color:#fff;border-color:transparent}
+
+
+/* Habit cards: the round check-in, the bars and the history grid all take the muted hue. */
+.hcard{--hm:color-mix(in oklab, var(--hc) 62%, #8a8178)}
+.hcard .tickbtn{color:var(--hm);border-color:color-mix(in oklab, var(--hm) 55%, transparent)}
+.hcard .tickbtn.on{background:var(--hm);color:#fff;border-color:transparent}
+.hcard .bar i{background:var(--hm) !important}
+.hgrid i.l1{background:color-mix(in oklab, var(--hm, var(--hc)) 26%, transparent)}
+.hgrid i.l2{background:color-mix(in oklab, var(--hm, var(--hc)) 48%, transparent)}
+.hgrid i.l3{background:color-mix(in oklab, var(--hm, var(--hc)) 72%, transparent)}
+.hgrid i.l4{background:var(--hm, var(--hc))}
+
+
+/* ---------- photo banners ---------- */
+.hero-band{position:relative;isolation:isolate;overflow:hidden;flex:none;display:flex;align-items:flex-end;justify-content:space-between;
+  flex-wrap:wrap;gap:14px 24px;min-height:clamp(120px, 17vh, 210px);margin:0 0 clamp(12px, 2vh, 22px);
+  padding:clamp(16px, 2.4vh, 28px) clamp(18px, 2vw, 30px) clamp(30px, 3.6vh, 40px);border-radius:24px;color:#fff;
+  background:linear-gradient(160deg, #2b3a55, #11151f);box-shadow:var(--sh2)}
+.hb-img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover}
+@keyframes hbdrift{from{transform:scale(1.04)}to{transform:scale(1.12) translate(-1.5%, -1%)}}
+@media (prefers-reduced-motion: no-preference){ .hb-img{animation:hbdrift 45s ease-in-out infinite alternate} }
+/* Dark on the left where the title sits, clearer to the right where the photo shows. */
+.hero-band::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(100deg, rgba(12,9,6,.66) 0%, rgba(12,9,6,.32) 55%, rgba(12,9,6,.14) 100%),
+             linear-gradient(0deg, rgba(12,9,6,.38), transparent 60%)}
+.hero-band.shead{display:flex;align-items:flex-end}
+.hb-text{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 20px;min-width:0}
+.hero-band h1{color:#fff;text-shadow:0 1px 16px rgba(0,0,0,.3)}
+.hero-band p{color:rgba(255,255,255,.84)}
+.hb-stats{display:flex;flex-wrap:wrap;gap:10px}
+.hb-stat{display:flex;flex-direction:column;align-items:flex-start;min-width:clamp(100px, 8.5vw, 150px);padding:10px 16px;text-align:left}
+.hb-stat b{font-family:var(--serif);font-size:clamp(22px, 3.2vh, 34px);font-weight:500;line-height:1.05;
+  font-variant-numeric:lining-nums tabular-nums}
+.hb-stat small{margin-top:3px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.84}
+button.hb-stat{cursor:pointer;transition:background .2s ease}
+@media (hover:hover) and (pointer:fine){ button.hb-stat:hover{background:rgba(255,255,255,.18)} }
+.hb-cap{position:absolute;right:clamp(14px, 1.6vw, 22px);bottom:9px;display:flex;align-items:center;gap:5px;
+  font-size:10.5px;letter-spacing:.04em;color:rgba(255,255,255,.72)}
+.hb-cap .i{width:12px;height:12px}
+@media (max-width:640px){
+  .hero-band{min-height:0;padding-bottom:34px}
+  .hb-stats{width:100%}
+  .hb-stat{flex:1 1 0;min-width:0;padding:8px 10px}
+  .hb-stat small{letter-spacing:.08em}
+}
+
+
+/* ---------- the calendar: Day, Week, Month ---------- */
+.cp-top{flex-wrap:wrap;row-gap:8px}
+.calpane .cp-seg{width:auto;margin:0 0 0 clamp(8px, 1.4vw, 18px);flex:none}
+.cp-seg button{padding:5px clamp(10px, 1vw, 16px);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.cm{flex:1;min-height:0;display:flex;flex-direction:column}
+.cm-dow{display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));gap:6px;padding:0 0 6px;
+  font-size:10.5px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.cm-dow span{padding-left:8px}
+.cm-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));
+  grid-template-rows:repeat(var(--rows), minmax(0, 1fr));gap:6px}
+.mc{min-width:0;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:3px;padding:6px;border-radius:12px;
+  background:color-mix(in oklab, var(--fg) 3%, transparent);border:1px solid transparent}
+.mc.blank{background:transparent}
+.mc.past{opacity:.72}
+.mc.today{border-color:var(--fg)}
+.mc-d{align-self:flex-start;min-width:28px;padding:3px 6px;border-radius:999px;font-family:var(--serif);
+  font-size:clamp(16px, 2.2vh, 22px);font-weight:500;line-height:1;font-variant-numeric:lining-nums tabular-nums}
+.mc.today .mc-d{background:var(--fg);color:var(--bg)}
+.mc .any small{color:var(--dim);margin-right:2px}
+@media (max-width:759px){
+  .cm-grid{grid-template-rows:repeat(var(--rows), minmax(78px, auto))}
+  .mc .any.x2{display:none}
+}
 
 /* Motion is decoration. If the OS says no, it all goes. */
 @media (prefers-reduced-motion: reduce){
@@ -530,22 +1196,67 @@ label.f{text-transform:uppercase;letter-spacing:.06em;font-size:var(--t-cap);fon
 <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.4s-8.2-4.8-8.2-10.2a4.6 4.6 0 0 1 8.2-2.9 4.6 4.6 0 0 1 8.2 2.9c0 5.4-8.2 10.2-8.2 10.2Z"/></symbol>
 <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.2v13.6M5.2 12h13.6"/></symbol>
 <symbol id="i-mirror" viewBox="0 0 24 24"><rect x="6.4" y="2.8" width="11.2" height="14" rx="5.6"/><path d="M9.2 20.6h5.6M12 16.8v3.8"/></symbol>
+
+<symbol id="i-wx-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.8v2.2M12 19v2.2M2.8 12H5M19 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/></symbol>
+<symbol id="i-wx-moon" viewBox="0 0 24 24"><path d="M19.6 14.6A8 8 0 0 1 9.4 4.4a8.2 8.2 0 1 0 10.2 10.2Z"/></symbol>
+<symbol id="i-wx-cloud" viewBox="0 0 24 24"><path d="M7 18.5h10.2a3.8 3.8 0 0 0 .4-7.6A5.6 5.6 0 0 0 6.9 9.7 4.4 4.4 0 0 0 7 18.5Z"/></symbol>
+<symbol id="i-wx-cloud-sun" viewBox="0 0 24 24"><path d="M9.2 6.4a3.6 3.6 0 0 1 5.9 1.4M8 3v1.4M3.4 7.6h1.4M4.7 4.3l1 1"/><path d="M8 20h9.4a3.4 3.4 0 0 0 .4-6.8 5 5 0 0 0-9.6-1.1A4 4 0 0 0 8 20Z"/></symbol>
+<symbol id="i-wx-rain" viewBox="0 0 24 24"><path d="M7 15.5h10.2a3.8 3.8 0 0 0 .4-7.6A5.6 5.6 0 0 0 6.9 6.7 4.4 4.4 0 0 0 7 15.5Z"/><path d="M8.5 18.2 7.6 20.6M12.5 18.2l-.9 2.4M16.5 18.2l-.9 2.4"/></symbol>
+<symbol id="i-wx-snow" viewBox="0 0 24 24"><path d="M7 15.5h10.2a3.8 3.8 0 0 0 .4-7.6A5.6 5.6 0 0 0 6.9 6.7 4.4 4.4 0 0 0 7 15.5Z"/><path d="M8.5 19.2h.01M12 20.4h.01M15.5 19.2h.01" stroke-width="2.4"/></symbol>
+<symbol id="i-wx-storm" viewBox="0 0 24 24"><path d="M7 15.5h10.2a3.8 3.8 0 0 0 .4-7.6A5.6 5.6 0 0 0 6.9 6.7 4.4 4.4 0 0 0 7 15.5Z"/><path d="m12.6 15.8-2 3.2h3l-2 3.2"/></symbol>
+<symbol id="i-wx-fog" viewBox="0 0 24 24"><path d="M7 13.5h10.2a3.8 3.8 0 0 0 .4-7.6A5.6 5.6 0 0 0 6.9 4.7 4.4 4.4 0 0 0 7 13.5Z"/><path d="M4.5 17h15M6.5 20.4h11"/></symbol>
+<symbol id="i-wx-rise" viewBox="0 0 24 24"><path d="M3 18.5h18M7.2 18.5a4.8 4.8 0 0 1 9.6 0"/><path d="M12 3.5v5M9.6 6 12 3.5 14.4 6"/></symbol>
+<symbol id="i-wx-set" viewBox="0 0 24 24"><path d="M3 18.5h18M7.2 18.5a4.8 4.8 0 0 1 9.6 0"/><path d="M12 8.5v-5M9.6 6 12 8.5 14.4 6"/></symbol>
+<symbol id="i-wx-wave" viewBox="0 0 24 24"><path d="M2.5 9.5c2.4 0 2.4-2 4.8-2s2.4 2 4.7 2 2.4-2 4.7-2 2.4 2 4.8 2M2.5 15.5c2.4 0 2.4-2 4.8-2s2.4 2 4.7 2 2.4-2 4.7-2 2.4 2 4.8 2"/></symbol>
+<symbol id="i-run" viewBox="0 0 24 24"><circle cx="14" cy="4.6" r="1.8"/><path d="M8 21.5l3.2-6.2 3.1 2.4v3.8M5.5 11.5l3.2-3.4h4.6l2.4 4 3.3.9M11.2 15.3l1.6-7.2"/></symbol>
+<symbol id="i-dumbbell" viewBox="0 0 24 24"><path d="M6.5 7v10M3.5 9.5v5M17.5 7v10M20.5 9.5v5M6.5 12h11"/></symbol>
+<symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3.5s6 6.5 6 10.5a6 6 0 0 1-12 0c0-4 6-10.5 6-10.5Z"/></symbol>
+<symbol id="i-lotus" viewBox="0 0 24 24"><path d="M12 19c-4.5 0-8-2.5-8.5-6 2.8-.2 5.3.8 7 2.6M12 19c4.5 0 8-2.5 8.5-6-2.8-.2-5.3.8-7 2.6M12 19c-2.3-2-3.3-4.3-3.3-7S10.5 6.8 12 5c1.5 1.8 3.3 4.3 3.3 7S14.3 17 12 19Z"/></symbol>
+<symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14ZM5 19l7-7"/></symbol>
+<symbol id="i-pill" viewBox="0 0 24 24"><rect x="3.2" y="8.6" width="17.6" height="6.8" rx="3.4" transform="rotate(-45 12 12)"/><path d="m9.6 9.6 4.8 4.8"/></symbol>
+<symbol id="i-laptop" viewBox="0 0 24 24"><rect x="5" y="5.5" width="14" height="10" rx="1.5"/><path d="M2.8 18.5h18.4"/></symbol>
+<symbol id="i-coins" viewBox="0 0 24 24"><ellipse cx="12" cy="7" rx="6.5" ry="2.5"/><path d="M5.5 7v5c0 1.4 2.9 2.5 6.5 2.5s6.5-1.1 6.5-2.5V7M5.5 12v5c0 1.4 2.9 2.5 6.5 2.5s6.5-1.1 6.5-2.5v-5"/></symbol>
+<symbol id="i-bag" viewBox="0 0 24 24"><path d="M5.5 8h13l-1 12.5h-11Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8Z"/></symbol>
+<symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m6 6 12 12"/></symbol>
+<symbol id="i-meal" viewBox="0 0 24 24"><path d="M7 3.5v17M4.5 3.5v5a2.5 2.5 0 0 0 5 0v-5M16.5 20.5V3.5c-2 1-3 3.5-3 6.5v3h3"/></symbol>
+<symbol id="i-cup" viewBox="0 0 24 24"><path d="M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5Z"/><path d="M16 10.5h1.5a2.5 2.5 0 0 1 0 5H16M8.5 3.5v2.5M12 3.5v2.5"/></symbol>
+<symbol id="i-car" viewBox="0 0 24 24"><path d="M4.5 12.5 6.5 7h11l2 5.5M3.5 12.5h17v4.5h-17Z"/><circle cx="7.5" cy="17" r="1.5"/><circle cx="16.5" cy="17" r="1.5"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3 5.5 13.5H12L11 21l7.5-10.5H12Z"/></symbol>
+<symbol id="i-game" viewBox="0 0 24 24"><rect x="3" y="7.5" width="18" height="10" rx="5"/><path d="M8 10.5v4M6 12.5h4M15.5 11.5h.01M17.5 13.5h.01"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11 12 4.5 20 11M6 9.5V20h12V9.5M10 20v-5h4v5"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24"><path d="m12 3.5 8 4v9l-8 4-8-4v-9ZM4 7.5l8 4 8-4M12 11.5v9"/></symbol>
+<symbol id="i-gift" viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M3 9h18M12 9v11M12 9c-1-2.5-2.5-4.5-4.5-4.5S5.5 8.5 12 9Zm0 0c1-2.5 2.5-4.5 4.5-4.5S18.5 8.5 12 9Z"/></symbol>
+<symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16M5 11.5h9.5a5 5 0 0 1 0 10H12"/></symbol>
+<symbol id="i-briefcase" viewBox="0 0 24 24"><rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M9 7.5v-2h6v2M3.5 12.5h17"/></symbol>
+<symbol id="i-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 14a4 4 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/></symbol>
+<symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-calc" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01M8.5 15h.01M12 15h.01M15.5 15v2.5M8.5 18.5h.01M12 18.5h.01"/></symbol>
+<symbol id="i-news" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="1.5"/><path d="M7 9h10M7 12.5h10M7 16h6"/></symbol>
+<symbol id="i-handshake" viewBox="0 0 24 24"><path d="M2.5 12.5 7 8.2l3 1.4 2-1.4 2 1.4 3-1.4 4.5 4.3M7 12.5l3.4 3.4a1.4 1.4 0 0 0 2-2M10 14l2.4 2.4a1.4 1.4 0 0 0 2-2l-2.4-2.4M13.2 13.7l1.8 1.8a1.4 1.4 0 0 0 2-2l-3-3"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5.5 5.5"/></symbol>
+<symbol id="i-paw" viewBox="0 0 24 24"><circle cx="6.5" cy="10" r="1.8"/><circle cx="10.2" cy="6.2" r="1.8"/><circle cx="14.8" cy="6.2" r="1.8"/><circle cx="18" cy="10.4" r="1.8"/><path d="M8.2 17.6c0-3 1.9-5.6 4.3-5.6s4.3 2.6 4.3 5.1c0 1.6-1 2.4-2.4 2.4-1.2 0-1.5-.8-2-.8s-.9.8-2.1.8c-1.3 0-2.1-.7-2.1-1.9Z"/></symbol>
+<symbol id="i-ruler" viewBox="0 0 24 24"><rect x="2.5" y="8.5" width="19" height="7" rx="1"/><path d="M6.5 8.5v3M10.5 8.5v2M14.5 8.5v3M18 8.5v2"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3M21 12v2"/></symbol>
+<symbol id="i-mountain" viewBox="0 0 24 24"><path d="M3 19.5 9.5 8l4 6.5 2.5-3.5 5 8.5Z"/></symbol>
+<symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 4v16M7.5 20h9M5 7h14M5 7l-2.5 6a2.5 2.5 0 0 0 5 0ZM19 7l-2.5 6a2.5 2.5 0 0 0 5 0Z"/></symbol>
 </defs></svg>
 <div id="app">
   <header>
     <button data-act="settings" aria-label="Settings"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-gear"/></svg></button>
-    <h1 id="title">Today</h1>
+    <div class="pills" id="pills" role="tablist" aria-label="Overview"></div>
     <button data-act="smart" aria-label="Smart Add"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-sparkles"/></svg></button>
   </header>
   <main id="main"></main>
-  <nav id="tabs">
-    <button data-act="tab:dash"><span class="ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-target"/></svg></span>Today</button>
-    <button data-act="tab:habits"><span class="ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-grid"/></svg></span>Habits</button>
-    <button data-act="tab:cal"><span class="ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-calendar"/></svg></span>Calendar</button>
-    <button data-act="tab:grow"><span class="ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-sprout"/></svg></span>Grow</button>
-    <button data-act="tab:fin"><span class="ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-wallet"/></svg></span>Finance</button>
-    <button data-act="tab:task"><span class="ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check-square"/></svg></span>Tasks</button>
-  </nav>
+  <!-- Two bars, one system. The top is the overview (Home's four slides); the bottom is
+       the workspaces, ordered by how the day runs: the routine, the to-dos, the long
+       game, the money. The calendar is Home's own, so it has no tab of its own. A dark marker glides to whichever is open. -->
+  <nav id="tabs" aria-label="Workspaces"><div class="tabtrack"><i class="thumb" aria-hidden="true"></i>
+    <button data-act="tab:habits"><span class="ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-grid"/></svg></span><span class="lb">Habits</span></button>
+    <button data-act="tab:task"><span class="ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check-square"/></svg></span><span class="lb">Tasks</span></button>
+    <button data-act="tab:grow"><span class="ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-sprout"/></svg></span><span class="lb">Grow</span></button>
+    <button data-act="tab:fin"><span class="ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-wallet"/></svg></span><span class="lb">Finance</span></button>
+  </div></nav>
   <button id="fab" data-act="fab" aria-label="Add"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></button>
 </div>
 <!-- No data-act on #sheet: it would swallow every tap inside the sheet (labels,
@@ -564,7 +1275,7 @@ label.f{text-transform:uppercase;letter-spacing:.06em;font-size:var(--t-cap);fon
    One file, no framework, no dependencies. Rules live in rules.js so they can be
    tested in Node (see test.js). */
 
-const BUILD = '2026-11-09.11';
+const BUILD = '2026-11-19.3';
 
 // A thrown error used to mean a blank white screen and no way to report it.
 // Put the message on the glass instead.
@@ -594,6 +1305,41 @@ let DB;
 try { DB = Object.assign({}, BLANK, JSON.parse(localStorage.getItem(KEY) || '{}')); }
 catch (e) { DB = JSON.parse(JSON.stringify(BLANK)); }
 DB.prefs = Object.assign({}, BLANK.prefs, DB.prefs);
+tidyHabits();
+
+/** Small habits that cluttered the day are retired (logs kept), and every plan habit has a time.
+    Runs on every load, so a copy adopted from Drive (which reloads) gets the same treatment. */
+function tidyHabits() {
+  const RETIRED = ['p1h-weigh', 'p1h-creatine'], NAMES = /^(drink water|move 30 minutes)$/i;
+  const TIMES = { 'p1h-protein': '12:00', 'p1h-dog': '13:15' };
+  // The plan's habits, reworded. Only text you haven't changed yourself is replaced.
+  const WORDING = {
+    'p1h-lift': {"name": ["Lift: full body (A/B alternating)", "Strength training: full body (A/B)"], "cue": ["After I wake up and drink water", "After waking and hydrating"]},
+    'p1h-protein': {"name": ["Protein feedings (35–40 g each, ~150 g/day)", "Protein: four 35–40 g servings (~150 g/day)"], "cue": ["Every meal or shake", "At each meal or shake"], "min": ["3 feedings, one of them the mass shake", "Three servings, including the mass shake"]},
+    'p1h-sleep': {"name": ["Lights out by 23:00", "Sleep: lights out by 23:00"], "cue": ["At 22:00: screens off, phone on the charger outside the bedroom", "22:00: screens off, phone charging outside the bedroom"], "min": ["Screens off 30 minutes before bed, 7 hours asleep", "Screens off 30 minutes before bed; 7 hours of sleep"]},
+    'p1h-study': {"name": ["Study block (CFA L1)", "CFA Level I study block"], "cue": ["After the networking block", "Immediately after the networking block"]},
+    'p1h-deep': {"name": ["Weekend deep block (CFA + research report)", "Weekend deep work: CFA and research report"], "min": ["Open the model and change one number", "Open the model and make one revision"]},
+    'p1h-cards': {"name": ["Review my cards", "Spaced-repetition card review"], "cue": ["In the planning block, the last study of the day", "During the planning block, as the day's last study task"], "min": ["5 cards", "Review 5 cards"]},
+    'p1h-markets': {"name": ["Markets + defense read", "Market and defense-sector briefing"], "cue": ["At the open", "At the market open"], "min": ["One headline and one A&D item, plus a single sentence on why it matters", "One market headline and one A&D item, each with a one-sentence takeaway"]},
+    'p1h-outreach': {"name": ["Networking outreach", "Networking outreach: two messages"], "cue": ["Right after the markets read", "Immediately after the market briefing"], "min": ["One connection request with a note", "One connection request with a personalized note"]},
+    'p1h-premarket': {"name": ["Pre-market plan: positions, watchlist, orders in", "Pre-market plan: positions, watchlist and orders"], "cue": ["In the 09:15 Claude session, before the open", "During the 09:15 Claude session, before the open"], "min": ["Check every open position's stop", "Confirm a stop on every open position"]},
+    'p1h-tjournal': {"name": ["Trade journal", "Daily trade journal"], "cue": ["When I sit down after dinner", "After dinner"], "min": ["Check every open position has a stop", "Confirm a stop on every open position"]},
+    'p1h-tweekly': {"cue": ["Sunday, after the deep block and the afternoon off", "Sunday, after the deep-work block"], "min": ["Read the week's stats", "Review the week's statistics"]},
+    'p1h-cardio': {"name": ["Walk or easy cardio (Tue / Thu)", "Low-intensity cardio (Tue/Thu)"], "cue": ["After I wake up and drink water", "After waking and hydrating"]},
+    'p1h-research': {"name": ["Research: report work", "Equity research: report drafting"], "cue": ["When Claude session 2 opens (window 2)", "At the start of Claude session 2"]},
+    'p1h-career': {"name": ["Applications and career", "Applications and career development"], "cue": ["After email batch 2", "After the second email batch"], "min": ["One concrete action: an application, a call or one interview question", "One concrete step: an application, a call or one interview question"]},
+    'p1h-teach': {"name": ["CFA teach-back, closed book", "CFA closed-book teach-back"], "cue": ["When Claude session 3 opens (window 3)", "At the start of Claude session 3"], "min": ["Write the main ideas from memory (5 minutes)", "Five minutes writing the key ideas from memory"]},
+    'p1h-plan': {"name": ["Plan tomorrow", "Next-day planning"], "min": ["Tomorrow's top 3", "Set tomorrow's top three priorities"]},
+    'p1h-dog': {"name": ["Hero Time with the dog", "Hero Time: dog walks and play"], "cue": ["13:15, 19:15, and the 22:00 evening walk", "13:15, 19:15 and the 22:00 evening walk"], "min": ["The walks the dog needs", "The essential walks"]},
+  };
+  DB.prefs.gone = [...new Set((DB.prefs.gone || []).concat(RETIRED))];
+  (DB.habits || []).forEach(h => {
+    if (RETIRED.includes(h.id) || NAMES.test(h.name || '')) h.archived = true;
+    if (h.stackAfter && RETIRED.includes(h.stackAfter)) h.stackAfter = null;
+    if (!h.at && TIMES[h.id]) h.at = TIMES[h.id];
+    Object.entries(WORDING[h.id] || {}).forEach(([f, [was, now]]) => { if (h[f] === was) h[f] = now; });
+  });
+}
 
 let saveTimer = null;
 function writeNow() {
@@ -657,7 +1403,42 @@ const ICONS = ['🏃', '🏋️', '💧', '😴', '📖', '🧘', '🥗', '💊'
 const CATS = { Food: '🍽️', Transport: '🚗', Bills: '⚡', Entertainment: '🎮', Shopping: '🛍️',
                Health: '💊', Home: '🏠', Education: '📚', Other: '📦' };
 const INCOME_CATS = { Salary: '💵', Gift: '🎁', Refund: '↩️', 'Other income': '➕' };
-const catIcon = c => CATS[c] || INCOME_CATS[c] || '📦';
+const catIcon = c => glyph(CATS[c] || INCOME_CATS[c] || '📦');
+
+// ---------- glyphs ----------
+// Emoji are drawn by the operating system: loud, cartoon, and different on every device.
+// The app still stores emoji (the plan file, backups and older data all carry them), but
+// draws each one as a line icon from the sprite, in the muted hue of whatever it belongs
+// to. An emoji with no icon of its own gets a quiet dot; letters someone typed stay letters.
+const GLYPH = (() => {
+  const g = {}, put = (name, list) => list.split(' ').forEach(e => { g[e.replace(/\uFE0F/g, '')] = name; });
+  put('run', '🏃 🚶'); put('mountain', '🧗'); put('dumbbell', '🏋️'); put('drop', '💧');
+  put('wx-moon', '😴 🌙 🥱'); put('book', '📖 📚 📓'); put('lotus', '🧘 😌'); put('leaf', '🥗');
+  put('sprout', '🌱'); put('pill', '💊 🩹'); put('pen', '✍️ 📝'); put('laptop', '💻 🤖');
+  put('coins', '💰 💵 💸'); put('bag', '🛒 🛍️'); put('target', '🎯'); put('heart', '❤️');
+  put('star', '⭐ 🎉'); put('award', '🏅'); put('ban', '🚭'); put('meal', '🍽️ 🍗'); put('cup', '☕');
+  put('car', '🚗'); put('bolt', '⚡'); put('game', '🎮'); put('home', '🏠'); put('box', '📦');
+  put('gift', '🎁'); put('undo', '↩️'); put('plus', '➕'); put('briefcase', '💼'); put('smile', '🙂');
+  put('calendar', '📅 🗓️'); put('check-square', '☑️'); put('check-circle', '✅'); put('compass', '🧭');
+  put('clock', '⏰ ⌛'); put('bars', '📊'); put('cards', '📇'); put('dot', '🔵 ⚪️'); put('repeat', '🔁');
+  put('bulb', '🧠'); put('sliders', '🎚️'); put('card', '💳'); put('lock', '🔒'); put('trend-up', '📈');
+  put('trend-down', '📉'); put('mail', '📨 ✉️'); put('calc', '🧮'); put('news', '📰'); put('handshake', '🤝');
+  put('receipt', '🧾'); put('search', '🔎'); put('message', '🗣️'); put('paw', '🐕'); put('wx-rise', '🌅');
+  put('sparkles', '🪥'); put('flame', '🔥'); put('link', '🔗'); put('ruler', '📐'); put('mirror', '🪞');
+  put('alert', '⚠️'); put('key', '🗝️'); put('layers', '🧱'); put('scale', '⚖️');
+  return g;
+})();
+const PICTO = /\p{Extended_Pictographic}/u;
+function glyph(e, cls) {
+  const s = String(e == null ? '' : e).trim();
+  if (!s) return '';
+  if (s[0] === '<') return s; // already an icon
+  const name = GLYPH[s.replace(/\uFE0F/g, '')] || (PICTO.test(s) ? 'dot' : null);
+  return name ? ic(name, 'g' + (cls ? ' ' + cls : '')) : esc(s);
+}
+/** A hairline tick: an empty ring, or filled ink with a check when done. */
+const tickMark = on => `<span class="tm${on ? ' on' : ''}" aria-hidden="true"></span>`;
+
 const TOTAL = '__total__';
 const AREAS = { Health: '❤️', Career: '💼', Finance: '💰', Education: '📚', Personal: '🙂' };
 const PRIOS = ['Low', 'Normal', 'High'];
@@ -681,7 +1462,7 @@ function accountBalance(a) {
   return R.balance(a.opening || 0, DB.txns.filter(t => t.accountId === a.id).map(t => t.amount));
 }
 function openTasks() { return DB.tasks.filter(t => !t.done); }
-function isOverdue(t) { return !t.done && t.due && t.due < today(); }
+function isOverdue(t) { return !t.done && ((t.due && t.due < today()) || (t.deadline && t.deadline < today())); }
 
 // ---------- charts (hand-rolled SVG; three charts don't justify a library) ----------
 function donut(slices, size) {
@@ -730,13 +1511,16 @@ function plot(series, labels, opts) {
 }
 
 // ---------- view state ----------
-const S = { tab: 'dash', calMode: 'month', calAnchor: today(), finMonth: R.monthKey(today()),
+const S = { tab: 'dash', slide: 0, homeAnchor: null, homeCal: 'week', finMonth: R.monthKey(today()),
             taskFilter: 'open', timer: null, gridWeeks: 26, pop: null, anim: true,
-            range: 30, calView: 'all', growView: 'goals', study: null, session: null,
+            range: 30, growView: 'goals', study: null, session: null,
             reviewView: 'week', taskView: 'tasks', appFilter: 'active' };
 
-const TITLES = { dash: 'Today', habits: 'Habits', cal: 'Calendar', fin: 'Finance',
+const TITLES = { dash: 'Today', habits: 'Habits', fin: 'Finance',
                  task: 'Tasks', grow: 'Grow' };
+const SUBTITLES = { habits: 'Every habit, and every day you kept it',
+  fin: 'Accounts, budgets, and where it went', task: 'What needs doing, and the applications in flight',
+  grow: 'Goals, learning, practice and review' };
 
 const reduced = () => !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
@@ -793,24 +1577,35 @@ function render() {
 
 function paint() {
   dropIndex();
-  $('#title').textContent = TITLES[S.tab];
-  document.querySelectorAll('#tabs button').forEach(b =>
-    b.setAttribute('aria-current', b.dataset.act === 'tab:' + S.tab ? 'page' : 'false'));
-  const html =
+  markPills();
+  // On Home the deck stays and only its slides' insides change; see patchDash.
+  if (S.tab === 'dash' && !S.anim && document.getElementById('dp-info') && document.getElementById('deck')) {
+    patchDash(); S.pop = null; S.quiet = false; wireScrub(); return;
+  }
+  $('#main').classList[S.tab === 'dash' ? 'add' : 'remove']('deckmode');
+  // Each workspace opens with a title in the same voice as Home's slides.
+  const html = (S.tab === 'dash' ? '' : heroBand(TITLES[S.tab], SUBTITLES[S.tab], S.tab, sectionStats(S.tab))) + (
     S.tab === 'dash' ? viewDash() :
     S.tab === 'habits' ? viewHabits() :
-    S.tab === 'cal' ? viewCal() :
     S.tab === 'grow' ? viewGrow() :
-    S.tab === 'fin' ? viewFin() : viewTasks();
+    S.tab === 'fin' ? viewFin() : viewTasks());
   // The wrapper is a fresh element every paint, which is what re-triggers the
   // entry animation — a class on #main itself would only ever run once.
   const entering = S.anim; // a tab or range change, not a check-in
-  $('#main').innerHTML = `<div${entering ? ' class="fadein"' : ''}>${html}</div>`;
+  // Today and the week use the whole screen on a tablet; the rest stay a readable column.
+  // A minute tick repaints quietly, so the rings and the chart don't redraw every minute.
+  const cls = [entering && !S.vt && 'fadein', S.tab === 'dash' && 'wide', S.quiet && 'quiet'].filter(Boolean);
+  const colScroll = !entering ? [...document.querySelectorAll('.bcol')].map(c => c.scrollTop) : [];
+  $('#main').classList.remove('wsmode', 'wspad');
+  $('#main').innerHTML = `<div${cls.length ? ` class="${cls.join(' ')}"` : ''}>${html}</div>`;
+  S.quiet = false;
   $('#main').scrollTop = S.keepScroll || 0;
   S.keepScroll = 0;
   S.anim = false;
   S.pop = null;
   wireScrub();
+  wireDeck();
+  if (S.tab !== 'dash') boardify(colScroll);
   if (entering) {
     const hero = document.getElementById('heroVal');
     if (hero) countUp(hero, Number(hero.dataset.to));
@@ -888,7 +1683,7 @@ function heroChart(series, color) {
   const w = 340, h = 108;
   const vals = series.map(p => Math.round(p.score * 100));
   const p = sparkPath(vals, w, h, 8);
-  return `<svg id="heroChart" class="scrub" viewBox="0 0 ${w} ${h}"
+  return `<svg id="heroChart" class="scrub" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"
       data-vals="${vals.join(',')}" data-keys="${series.map(s => s.key).join(',')}"
       data-pts="${p.pts.join(' ')}">
     <defs><linearGradient id="hgrad" x1="0" y1="0" x2="0" y2="1">
@@ -896,7 +1691,7 @@ function heroChart(series, color) {
       <stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>
     <path d="${p.area}" fill="url(#hgrad)"/>
     <path class="heroLine" d="${p.line}" fill="none" stroke="${color}" stroke-width="2.2"
-      stroke-linejoin="round" stroke-linecap="round" pathLength="1"/>
+      stroke-linejoin="round" stroke-linecap="round" pathLength="1" vector-effect="non-scaling-stroke"/>
     <line id="heroCross" y1="0" y2="${h}" stroke="var(--fg)" stroke-width="1" opacity="0"/>
     <circle id="heroDot" r="4.5" fill="${color}" stroke="var(--card)" stroke-width="2.5" opacity="0"/>
   </svg>`;
@@ -958,7 +1753,418 @@ function trackRow(o) {
 const signed = n => (n >= 0 ? '▲ ' : '▼ ') + Math.abs(n);
 const upDown = n => (n >= 0 ? 'var(--green)' : 'var(--red)');
 
-function viewDash() {
+// ---------- home: the day on a wall ----------
+// Laid out like a smart home calendar: the clock and the week up top, what's on now and
+// next, the day as a timeline, then the program it all feeds. The brokerage-style score
+// is still here, under Progress, because "am I up or down" is still the right question
+// once the day itself is answered. One column on a phone; two or three on a tablet or a
+// wall, where it is read from across the room.
+
+const AREA_COLORS = { Health: '#6f9a78', Career: '#5b7a99', Finance: '#bf8a46', Education: '#857399', Personal: '#5f9490' };
+const areaColor = a => AREA_COLORS[a] || 'var(--tint)';
+const nowMinutes = () => { const n = new Date(); return n.getHours() * 60 + n.getMinutes(); };
+const clockText = n => n.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+// "9:41" big, "PM" small beside it, so a 12-hour clock fits a column without wrapping.
+const clockHTML = n => esc(clockText(n)).replace(/\s*([^\d:\s.]+\.?\s*[^\d:\s]*)$/, '<small>$1</small>');
+const away = m => (m < 60 ? `in ${m} min` : `in ${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ''}`);
+
+/** Planned sessions from Grow → Plan live in the engine's own calendar, not DB. */
+function planSessions(day) {
+  if (!PLAN) PLAN = planLoad();
+  if (PLAN.error) return [];
+  const t0 = R.fromYMD(day).getTime(), t1 = R.fromYMD(R.addDays(day, 1)).getTime();
+  return PLAN.u.list('session', s => s.status === 'planned' && s.start >= t0 && s.start < t1).map(s => ({
+    at: new Date(s.start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: PLAN.u.tz }),
+    len: s.minutes, act: 'growto:plan', icon: '📅', name: s.title, color: 'var(--purple)', done: false, meta: `${s.minutes} min`,
+  }));
+}
+
+/** Today, placed on the clock, with what's overdue alongside. */
+function briefData(day) {
+  const d = day || today();
+  const late = d !== today() ? [] : DB.tasks.filter(isOverdue).map(t => ({
+    at: null, act: `tbrief:${t.id}`, tick: `taskdone:${t.id}`, icon: '☑️', name: t.title,
+    color: 'var(--red)', done: false, meta: t.deadline && t.deadline < today() ? 'deadline ' + fmtDue(t.deadline) : fmtDue(t.due), late: true,
+  }));
+  return { late, sched: R.daySchedule(daySlots(d).concat(planSessions(d))) };
+}
+
+const tickOf = s => s.tick || (s.quick ? `hquick:${s.quick}` : '');
+const spanOf = s => (s.mins == null ? '' : s.at + (R.slotEnd(s) > s.mins ? '–' + R.hhmm(Math.min(R.slotEnd(s), 1439)) : ''));
+
+// ---------- scenes: the photo behind the clock ----------
+// Famous landscapes, no people, like a desktop wallpaper that changes itself. They ship
+// with the app (app/scenes, 1920px), so they work offline and nothing is fetched from a
+// third party. All from Wikimedia Commons; each one is credited on screen as its licence asks.
+const SCENES = [
+  ['moraine', 'Moraine Lake, Banff, Canada', 'Gorgo', 'Public domain', 'Moraine Lake 17092005.jpg'],
+  ['dolomites', 'Tre Cime di Lavaredo, Dolomites, Italy', 'Ximonic (Simo Räsänen)', 'CC BY-SA 4.0', 'Valle della Rienza and Tre Cime di Lavaredo from Alpe Specie, Val Pusteria, Trentino-Alto Adige, Italy, 2025 October.jpg'],
+  ['yosemite', 'Tunnel View, Yosemite, California', 'Diliff', 'CC BY-SA 3.0', 'Tunnel View, Yosemite Valley, Yosemite NP - Diliff.jpg'],
+  ['fuji', 'Mount Fuji at sunset, Japan', 'Romain Guy', 'CC0', 'Mount Fuji at sunset, March 2025.jpg'],
+  ['reine', 'Reine, Lofoten, Norway', 'Ximonic (Simo Räsänen)', 'CC BY-SA 4.0', 'Houses of Reine by Gravdalsbukta, Moskenes, Nordland, Norway, 2022 June.jpg'],
+  ['antelope', 'Lower Antelope Canyon, Arizona', 'King of Hearts', 'CC BY-SA 4.0', 'Lower Antelope Canyon November 2018 008.jpg'],
+  ['matterhorn', 'Matterhorn, Switzerland', 'Liridon', 'CC BY-SA 4.0', 'Matterhorn, March 2019 (01).jpg'],
+  ['kirkjufell', 'Kirkjufell, Iceland', 'Jakub Hałun', 'CC BY 4.0', 'Kirkjufell, Iceland, 20240714 1631 0713.jpg'],
+  ['paine', 'Cuernos del Paine, Patagonia, Chile', 'Pedro Szekely', 'CC BY-SA 2.0', 'Cuernos del Paine in Torres del Paine National Park.jpg'],
+  ['grandcanyon', 'Grand Canyon from Hopi Point, Arizona', 'Tuxyso', 'CC BY-SA 3.0', 'Grand Canyon Hopi Point with rainbow 2013.jpg'],
+  ['chola', 'Chola Lake, Khumbu, Nepal', 'Vyacheslav Argenberg', 'CC BY 4.0', 'Chola Mountain Lake, Nepal.jpg'],
+  ['monumentvalley', 'Monument Valley, Utah', 'King of Hearts', 'CC BY-SA 4.0', 'Forrest Gump Point Monument Valley November 2018 001.jpg'],
+  ['seljalandsfoss', 'Seljalandsfoss, Iceland', 'Diego Delso', 'CC BY-SA 4.0', 'Seljalandsfoss, Suðurland, Islandia, 2014-08-16, DD 201-203 HDR.JPG'],
+].map(([f, place, by, lic, file]) => ({ f, place, by, lic, file }));
+const SCENE_MS = 60000; // one photo a minute, cross-faded
+const sceneAt = t => SCENES[Math.floor(t / SCENE_MS) % SCENES.length];
+const sceneCap = s => `${ic('compass')} ${esc(s.place)} <span>· ${esc(s.by)}, ${esc(s.lic)}</span>`;
+const commonsUrl = s => 'https://commons.wikimedia.org/wiki/File:' + encodeURIComponent(s.file.replace(/ /g, '_'));
+
+function sceneHTML() {
+  const s = sceneAt(Date.now());
+  return `<div id="scene" aria-hidden="true"><img class="show" src="scenes/${s.f}.jpg" alt="" data-f="${s.f}"><img alt=""></div>`;
+}
+
+/** Cross-fade to the next photo once it has decoded. Offline with it not yet cached, the
+    one showing just stays. */
+async function sceneTick() {
+  const box = document.getElementById('scene');
+  if (!box || !box.querySelectorAll) return;
+  const s = sceneAt(Date.now()), [a, b] = box.querySelectorAll('img');
+  if (!a || !b) return;
+  const cur = a.classList.contains('show') ? a : b, nxt = cur === a ? b : a;
+  if (cur.dataset.f === s.f || nxt.dataset.f === s.f + '…') return;
+  nxt.dataset.f = s.f + '…';
+  nxt.src = `scenes/${s.f}.jpg`;
+  try { await nxt.decode(); } catch (e) { nxt.dataset.f = ''; return; }
+  nxt.dataset.f = s.f;
+  nxt.classList.add('show'); cur.classList.remove('show');
+  const cap = document.getElementById('sceneCap');
+  if (cap) cap.innerHTML = sceneCap(s);
+}
+
+// ---------- theme ----------
+const isDark = () => DB.prefs.theme === 'dark' ||
+  (DB.prefs.theme !== 'light' && !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches));
+function applyTheme() {
+  const r = document.documentElement;
+  if (!r || !r.dataset) return;
+  if (DB.prefs.theme === 'light' || DB.prefs.theme === 'dark') r.dataset.theme = DB.prefs.theme;
+  else delete r.dataset.theme;
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute('content', isDark() ? '#121110' : '#f3efe8'));
+}
+/** The new theme washes in as a circle from where you tapped. */
+function setTheme(t, x, y) {
+  const go = () => { DB.prefs.theme = t; save(); applyTheme(); render(); };
+  const r = document.documentElement;
+  if (!document.startViewTransition || reduced() || !r || !r.style) { go(); return; }
+  r.style.setProperty('--vx', (x || innerWidth / 2) + 'px');
+  r.style.setProperty('--vy', (y || 0) + 'px');
+  r.classList.add('vt-theme');
+  document.startViewTransition(go).finished.finally(() => r.classList.remove('vt-theme'));
+}
+/** Tabs cross-fade instead of cutting. */
+// While one runs, the page's own fade-up is skipped (S.vt): the transition already moves it.
+const vt = fn => (document.startViewTransition && !reduced()
+  ? document.startViewTransition(() => { S.vt = true; try { fn(); } finally { S.vt = false; } }) : fn());
+
+// ---------- weather and tides ----------
+// Open-Meteo: free, no key, no account. Only the place you pick (Settings, or the card on
+// Home) is sent. Cached for 30 minutes in its own key, so it never rides along with Drive sync.
+const WKEY = 'p1p.wx';
+const wxGet = () => { try { return JSON.parse(localStorage.getItem(WKEY) || 'null'); } catch (e) { return null; } };
+const imperial = () => /-(US|LR|MM)$/i.test((typeof navigator !== 'undefined' && navigator.language) || '');
+const fmtHM = hm => { const m = R.minutesOf(hm); return m == null ? '' : clockText(new Date(2000, 0, 1, Math.floor(m / 60), m % 60)); };
+const wxIc = name => ic('wx-' + name, 'wxg');
+
+async function loadWx(force) {
+  const p = DB.prefs.place;
+  if (!p || !window.fetch) return;
+  const c = wxGet(), key = `${p.lat},${p.lon},${imperial()}`;
+  if (!force && c && c.key === key && Date.now() - c.at < 30 * 60000) return;
+  const q = `latitude=${p.lat}&longitude=${p.lon}&timezone=auto`;
+  try {
+    const [w, m] = await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?${q}${imperial() ? '&temperature_unit=fahrenheit' : ''}` +
+        '&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&forecast_days=4')
+        .then(r => (r.ok ? r.json() : null)),
+      fetch(`https://marine-api.open-meteo.com/v1/marine?${q}&hourly=sea_level_height_msl&forecast_days=3`)
+        .then(r => (r.ok ? r.json() : null)).catch(() => null),
+    ]);
+    if (!w || !w.current) return;
+    localStorage.setItem(WKEY, JSON.stringify({ at: Date.now(), key, w, m }));
+    if (S.tab === 'dash') render();
+  } catch (e) { /* offline: the last copy stays on screen */ }
+}
+
+/** The weather card: now, today's high and low, the next three days, sunrise and sunset. */
+function wxHTML(w) {
+  const deg = v => Math.round(v) + '°';
+  const [label, icon] = R.wxInfo(w.current.weather_code);
+  const ico = wxIc(icon === 'sun' && !w.current.is_day ? 'moon' : icon);
+  const dl = w.daily || {};
+  const days = (dl.time || []).slice(1, 4).map((t, i) => `<span><small>${DAYN[R.weekdayOf(t)]}</small>${wxIc(R.wxInfo(dl.weather_code[i + 1])[1])}
+    <b>${deg(dl.temperature_2m_max[i + 1])}</b><small>${deg(dl.temperature_2m_min[i + 1])}</small></span>`).join('');
+  const sun = dl.sunrise && dl.sunrise[0] ? `<span class="sunrow">${ic('wx-rise', 'wxs')} ${esc(fmtHM(dl.sunrise[0].slice(11)))} ${ic('wx-set', 'wxs')} ${esc(fmtHM(dl.sunset[0].slice(11)))}</span>` : '';
+  return `<button class="glass wx" data-act="place">
+    <span class="wxnow"><span class="wxi">${ico}</span>
+      <span class="wxtx"><b class="wxt">${deg(w.current.temperature_2m)}</b> <span class="wxl">${esc(label)}</span>
+        <small>H ${deg(dl.temperature_2m_max[0])} · L ${deg(dl.temperature_2m_min[0])} · ${esc(DB.prefs.place.name)}</small>${sun}</span></span>
+    ${days ? `<span class="wxd">${days}</span>` : ''}</button>`;
+}
+
+/** The next high and low, and the next day's water as a line with a dot at now. */
+function tideHTML(m) {
+  const hr = m && m.hourly;
+  if (!hr || !(hr.sea_level_height_msl || []).some(v => v != null)) return '';
+  const ft = imperial(), unit = ft ? 'ft' : 'm', k = ft ? 3.281 : 1;
+  const n = new Date(), nowIso = `${today()}T${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`;
+  const turns = R.tideTurns(hr.time, hr.sea_level_height_msl).filter(t => `${t.day}T${t.at}` > nowIso).slice(0, 2);
+  const i0 = Math.max(0, hr.time.findIndex(t => t.slice(0, 13) === nowIso.slice(0, 13)));
+  const vals = hr.sea_level_height_msl.slice(i0, i0 + 25).filter(v => v != null);
+  const line = vals.length > 2 ? sparkPath(vals, 240, 40, 4) : null;
+  return `<div class="glass tide">
+    <div class="row" style="gap:14px"><span class="ttl">${ic('wx-wave', 'wxs')} Tides</span>${turns.map(t => `<span class="tt"><small>${t.high ? 'High' : 'Low'}</small>
+      <b>${esc(fmtHM(t.at))}</b><small>${(t.h * k).toFixed(1)} ${unit}${t.day !== today() ? ' · tmrw' : ''}</small></span>`).join('')}</div>
+    ${line ? `<svg viewBox="0 0 240 40" preserveAspectRatio="none" class="tline" aria-hidden="true"><path d="${line.area}" fill="rgba(255,255,255,.16)"/>
+      <path d="${line.line}" fill="none" stroke="#fff" stroke-width="1.6" vector-effect="non-scaling-stroke"/>
+      <circle cx="${line.x(0).toFixed(1)}" cy="${line.y(vals[0]).toFixed(1)}" r="3.2" fill="#fff"/></svg>` : ''}
+  </div>`;
+}
+
+/** The left third of Home: the time, the weather, the tides, and what's next. */
+function infoPanel(brief) {
+  const n = new Date(), m = nowMinutes(), d = today();
+  const greet = n.getHours() < 5 ? 'Good night' : n.getHours() < 12 ? 'Good morning' : n.getHours() < 17 ? 'Good afternoon' : 'Good evening';
+  const c = wxGet(), p = DB.prefs.place;
+  const fresh = c && p && c.w && c.w.current && String(c.key || '').startsWith(`${p.lat},${p.lon},`);
+  const { now, next } = R.nowNext(brief.sched.placed, m);
+  const hs = scheduledOn(d), done = hs.filter(h => habitDone(h, d)).length;
+  return `<div class="ib-top">
+      <button class="glass gbtn" data-act="theme" aria-label="Switch to ${isDark() ? 'light' : 'dark'} theme">${ic(isDark() ? 'wx-sun' : 'wx-moon')}</button>
+      <button class="glass gbtn" data-act="kiosk" aria-label="${S.kiosk ? 'Exit display mode' : 'Display mode'}">${ic('mirror')}</button></div>
+    <div class="ib-time" id="hClock">${clockHTML(n)}</div>
+    <div class="ib-date">${esc(dayTitle(d))}</div>
+    <div class="ib-greet">${greet}${hs.length ? ` · ${done} of ${hs.length} habits done` : ''}</div>
+    <div class="ib-cards">
+    ${fresh ? wxHTML(c.w) + tideHTML(c.m) : `<button class="glass wx" data-act="place"><span class="wxnow"><span class="wxi">${wxIc('cloud-sun')}</span>
+      <span class="wxtx"><b class="wxl" style="display:block">Weather and tides</b><small>Add your place to see them here</small></span></span></button>`}
+    ${now || next ? `<button class="glass upn" data-act="slide:1">
+      ${now ? `<small>Now · until ${esc(fmtHM(R.hhmm(Math.min(R.slotEnd(now), 1439))))}</small><b>${esc(now.name)}</b>` : ''}
+      ${next ? `<small>Next · ${away(next.mins - m)}</small><b>${esc(next.name)}</b>` : ''}</button>` : ''}
+    </div>
+    <div class="scap" id="sceneCap">${sceneCap(sceneAt(Date.now()))}</div>`;
+}
+
+/** The calendar: the right two-thirds of Home, and the only calendar in the app. It holds
+    events and tasks, with their times and deadlines. Habits, the routine and the daily
+    review are the day's schedule, and that lives on Today. Day, a rolling week, or the month. */
+const CAL_MODES = [['day', 'Day'], ['week', 'Week'], ['month', 'Month']];
+function calPane() {
+  const t = today(), a = S.homeAnchor || t, mode = S.homeCal || 'week';
+  const top = title => `<div class="cp-top">
+      <h2 class="cp-month">${esc(title)}</h2>
+      <div class="seg cp-seg">${CAL_MODES.map(([k, l]) => `<button data-act="hcal:${k}" aria-pressed="${mode === k}">${l}</button>`).join('')}</div>
+      <span class="spacer"></span>
+      <button class="mini" data-act="hshift:-1" aria-label="Earlier">‹</button>
+      <button class="mini" data-act="hshift:0">Today</button>
+      <button class="mini" data-act="hshift:1" aria-label="Later">›</button></div>`;
+  const monthName = k => R.fromYMD(k).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  if (mode === 'month') return top(monthName(a)) + calMonth(a);
+  const days = mode === 'day' ? [a] : Array.from({ length: 7 }, (_, i) => R.addDays(a, i));
+  const per = days.map(day => R.daySchedule(calSlots(day)));
+  // Six to eleven, widened for anything earlier or later.
+  let from = 6, to = 23;
+  // A point in time is drawn 25 minutes tall, so the window has to reach past its start too.
+  per.forEach(s => s.placed.forEach(x => { from = Math.min(from, Math.floor(x.mins / 60)); to = Math.max(to, Math.ceil(Math.min(Math.max(R.slotEnd(x), x.mins + 25), 1440) / 60)); }));
+  to = Math.min(24, to);
+  const m = nowMinutes();
+  const cls = i => (mode === 'week' && i >= 3 ? ' x3' : '') + (mode === 'week' && i >= 5 ? ' x5' : '');
+  const head = days.map((day, i) => {
+    const any = per[i].anytime.filter(s => !s.block && !s.part);
+    return `<div class="tg-h${day === t ? ' today' : ''}${cls(i)}">
+      <button class="tg-d" data-act="calday:${day}"><small>${DAYN[R.weekdayOf(day)]}</small><b>${R.fromYMD(day).getDate()}</b></button>
+      <div class="tg-any">${any.slice(0, 2).map(s => `<button class="any${s.done ? ' done' : ''}" data-act="${s.act}" style="--hc:${esc(s.color || 'var(--tint)')}">${esc(s.name)}</button>`).join('')}${
+        any.length > 2 ? `<button class="any more" data-act="calday:${day}">+${any.length - 2} more</button>` : ''}</div></div>`;
+  }).join('');
+  const cols = days.map((day, i) => {
+    const L = R.layoutDay(per[i].placed, from, to);
+    return `<div class="tg-col${day === t ? ' today' : ''}${cls(i)}">
+      ${L.events.map(e => `<button class="ev${e.s.done ? ' done' : ''}" data-act="${e.s.act}"
+        style="top:${e.top}%;height:${e.height}%;left:calc(${e.col} * 100% / ${e.cols});width:calc(100% / ${e.cols} - 3px);--hc:${esc(e.s.color || 'var(--tint)')}">
+        <b>${esc(e.s.name)}</b><small>${esc(fmtHM(e.s.at))}</small></button>`).join('')}
+      ${day === t && m >= from * 60 && m < to * 60 ? `<i class="nowl" style="top:${(((m - from * 60) / ((to - from) * 60)) * 100).toFixed(2)}%"></i>` : ''}
+    </div>`;
+  }).join('');
+  const hours = Array.from({ length: to - from - 1 }, (_, i) => from + 1 + i).map(hh =>
+    `<span style="top:${(((hh - from) / (to - from)) * 100).toFixed(2)}%">${esc(fmtHM(R.hhmm(hh * 60)).replace(':00', ''))}</span>`).join('');
+  return top(mode === 'day' ? dayTitle(a) : monthName(a)) + `
+    <div class="tg"${mode === 'day' ? ' style="--days:1"' : ''}>
+      <div class="tg-head"><span></span>${head}</div>
+      <div class="tg-body" style="--hours:${to - from}"><div class="tg-hours">${hours}</div>${cols}</div>
+    </div>`;
+}
+
+/** The month: each day with its first few events and tasks, earliest first. */
+function calMonth(a) {
+  const t = today(), first = a.slice(0, 8) + '01';
+  const fd = R.fromYMD(first), total = R.daysInMonth(fd.getFullYear(), fd.getMonth() + 1), lead = R.weekdayOf(first);
+  const rows = Math.ceil((lead + total) / 7);
+  const cell = k => {
+    const s = R.daySchedule(calSlots(k)), list = [...s.placed, ...s.anytime];
+    return `<div class="mc${k === t ? ' today' : ''}${k < t ? ' past' : ''}">
+      <button class="mc-d" data-act="calday:${k}">${R.fromYMD(k).getDate()}</button>
+      ${list.slice(0, 3).map((x, i) => `<button class="any${x.done ? ' done' : ''}${i ? ' x2' : ''}" data-act="${x.act}" style="--hc:${esc(x.color || 'var(--tint)')}">${
+        x.at ? `<small>${esc(fmtHM(x.at))}</small> ` : ''}${esc(x.name)}</button>`).join('')}
+      ${list.length > 3 ? `<button class="any more" data-act="calday:${k}">+${list.length - 3} more</button>` : ''}
+    </div>`;
+  };
+  const cells = Array.from({ length: rows * 7 }, (_, i) => {
+    const n = i - lead;
+    return n < 0 || n >= total ? '<div class="mc blank"></div>' : cell(R.addDays(first, n));
+  }).join('');
+  return `<div class="cm"><div class="cm-dow">${DAYN.map(x => `<span>${x}</span>`).join('')}</div>
+    <div class="cm-grid" style="--rows:${rows}">${cells}</div></div>`;
+}
+
+/** Pick the place for weather and tides: search by name, or use where you are. */
+function placeSheet() {
+  const p = DB.prefs.place;
+  const body = list => `
+    <label class="f">City or town</label>
+    <div class="inline"><input id="plQ" placeholder="e.g. Hoboken" autocomplete="off">
+      <button class="btn" style="margin:0;flex:0 0 auto;width:auto;padding:0 18px" data-act="plFind">Find</button></div>
+    ${list.map((r, i) => `<button class="opt" data-act="plPick:${i}"><span style="flex:1"><strong>${esc(r.name)}</strong><br>
+      <span class="hint">${esc([r.admin1, r.country].filter(Boolean).join(', '))}</span></span></button>`).join('')}
+    <button class="btn sec" data-act="plHere">Use my location</button>
+    ${p ? `<button class="btn danger" data-act="plClear">Stop showing ${esc(p.name)}</button>` : ''}
+    <p class="hint" style="margin-top:12px">Weather and tides come from Open-Meteo: free, no account. Only this place is sent,
+      never anything else from the app. Tides show where there is sea nearby.</p>`;
+  openSheet('Weather and tides', body([]), () => {
+    sheetSubmit = { list: [], redraw() { const q = val('plQ'); $('#sheetInner').innerHTML = body(this.list); const e = document.getElementById('plQ'); if (e) e.value = q; } };
+  });
+}
+function setPlace(pl) {
+  DB.prefs.place = pl; save();
+  try { localStorage.removeItem(WKEY); } catch (e) {}
+  closeSheet(); render(); loadWx(true);
+}
+
+/** Now and next, big enough to read from the doorway. */
+function nowNextCard(placed) {
+  const m = nowMinutes(), { now, next } = R.nowNext(placed, m);
+  if (!now && !next) return '';
+  const part = (label, s, foot) => {
+    const tk = tickOf(s);
+    return `<div class="nn" style="--hc:${esc(s.color || 'var(--tint)')}">
+      <span class="nnl">${label}</span>
+      <div class="row" style="gap:12px">
+        <div style="flex:1;min-width:0" data-act="${s.act}">
+          <div class="nnt">${glyph(s.icon)} ${esc(s.name)}</div>
+          <div class="sub" style="margin-top:3px">${esc([spanOf(s), s.meta].filter(Boolean).join(' · '))}</div>
+        </div>
+        ${tk ? `<button class="tk big" data-act="${tk}" aria-label="Mark ${esc(s.name)} done"></button>` : ''}
+      </div>${foot || ''}</div>`;
+  };
+  let out = '';
+  if (now) {
+    const end = R.slotEnd(now), pct = Math.round(((m - now.mins) / Math.max(1, end - now.mins)) * 100);
+    out += part('Now', now, `<div class="bar" style="margin-top:12px"><i style="width:${pct}%;background:var(--hc)"></i></div>
+      <div class="sub" style="margin-top:6px">ends ${away(end - m)}</div>`);
+  }
+  if (next) out += part(`Up next · ${away(next.mins - m)}`, next);
+  return `<div class="card nncard">${out}</div>`;
+}
+
+/** The morning brief, as a timeline: what's done and behind you folds away, the red line is now. */
+function dailyBrief(b, day) {
+  const d = day || today(), isT = d === today(), { late, sched } = b || briefData(d);
+  const items = [...late, ...sched.placed, ...sched.anytime];
+  const todo = items.filter(s => !s.block && !s.part && !s.ev); // routine blocks and calendar events show the day; only these count
+  const left = todo.filter(s => !s.done);
+  // Another day has no now: nothing folds away and there is no red line.
+  const m = isT ? nowMinutes() : -1;
+  const next = isT ? sched.placed.find(s => !s.done && s.mins >= m) : null;
+  const live = isT ? R.nowNext(sched.placed, m).now : null;
+
+  const summary = !items.length ? `Nothing on ${isT ? 'today' : 'this day'}. Tap + to add something.`
+    : !todo.length ? 'Your routine for the day.'
+    : !left.length ? `All ${todo.length} done. Good day.`
+    : [`${left.length} of ${todo.length} left`,
+       late.length && `${late.length} overdue`,
+       next && `next: ${next.name} at ${next.at}`].filter(Boolean).join(' · ');
+
+  const row = s => {
+    const tk = tickOf(s);
+    return `<li class="${[s.block && 'blk', s.done && 'done', s === live && 'now'].filter(Boolean).join(' ')}" style="--hc:${esc(s.color || 'var(--tint)')}">
+      <span class="tlt">${s.late ? '<span style="color:var(--red)">Late</span>' : esc(s.at || '')}${s.mins != null && R.slotEnd(s) > s.mins ? `<small>${esc(R.hhmm(Math.min(R.slotEnd(s), 1439)))}</small>` : ''}</span>
+      <div class="tlb" data-act="${s.act}">
+        <div class="${s.done ? 'strike' : ''}"${s === next ? ' style="font-weight:650"' : ''}>${glyph(s.icon)} ${esc(s.name)}</div>
+        ${s.meta || s.late || s === next ? `<div class="meta">${s.late ? `<span style="color:var(--red)">overdue · ${esc(s.meta)}</span>`
+          : s.meta ? `<span>${esc(s.meta)}</span>` : ''}${s === next ? '<span style="color:var(--tint)">up next</span>' : ''}</div>` : ''}
+      </div>
+      ${s.done ? '<span class="tk on" aria-hidden="true"></span>' : tk ? `<button class="tk" data-act="${tk}" aria-label="Mark ${esc(s.name)} done"></button>` : ''}
+    </li>`;
+  };
+  // A wall calendar drops what's behind you, so the page opens on now. Anything whose time
+  // has passed folds under Earlier, with a count of what was missed, still tickable inside;
+  // the fold stays open across repaints so you can tick several in a row.
+  const gone = s => R.slotEnd(s) <= m;
+  const earlier = sched.placed.filter(gone), ahead = sched.placed.filter(s => !gone(s));
+  const missed = earlier.filter(s => !s.done && !s.block && !s.part).length;
+  const at = ahead.findIndex(s => s.mins > m);
+  const line = isT ? `<li class="nowline" aria-label="now">${esc(clockText(new Date()))}</li>` : '';
+  const timeline = ahead.map((s, i) => (i === at ? line : '') + row(s)).join('') + (at < 0 && ahead.length ? line : '');
+
+  const shift = S.briefShift || 0;
+  return `<div class="card agenda"><div class="row" style="gap:6px;margin-bottom:10px"><h2 style="flex:1;margin:0">${ic('clock')} Daily brief</h2>
+      <button class="mini" data-act="bshift:-1" aria-label="Previous day">‹</button>
+      <button class="mini" data-act="bshift:0"${shift ? '' : ' aria-pressed="true"'}>Today</button>
+      <button class="mini" data-act="bshift:1" aria-label="Next day">›</button></div>
+    <p class="sub" style="margin:0 0 8px">${esc(dayTitle(d))} · ${esc(summary)}</p>
+    ${late.length ? `<ul class="tl">${late.map(row).join('')}</ul>` : ''}
+    ${earlier.length ? `<details class="earlier"${S.earlier ? ' open' : ''}><summary data-act="earlier">Earlier today · ${earlier.length}${
+      missed ? ` · <span style="color:var(--orange)">${missed} not done</span>` : ''}</summary>
+      <ul class="tl">${earlier.map(row).join('')}</ul></details>` : ''}
+    ${ahead.length ? `<ul class="tl">${timeline}</ul>` : ''}
+    ${sched.anytime.length ? `<div class="tlh">Any time</div><ul class="tl">${sched.anytime.map(row).join('')}</ul>` : ''}
+  </div>`;
+}
+
+/** Goals, habits and the calendar as one program: each goal, how this week is going against
+    the same days last week, and the next thing on today's calendar that moves it. */
+function programCard() {
+  const gs = liveGoals();
+  if (!gs.length) return '';
+  const d = today(), span = R.weekdayOf(d) + 1; // week to date, against the same days a week ago
+  const kept = (hs, end) => hs.reduce((a, h) => {
+    const r = R.completionRate(h, logValue, end, span);
+    return { done: a.done + r.done, total: a.total + r.total };
+  }, { done: 0, total: 0 });
+  const rate = k => (k.total ? Math.round((k.done / k.total) * 100) : null);
+  const slots = R.daySchedule(daySlots(d)).placed.filter(s => !s.done && s.goalId);
+  const m = nowMinutes();
+
+  const all = kept(liveHabits(), d), allPrev = kept(liveHabits(), R.addDays(d, -7));
+  const dAll = rate(all) != null && rate(allPrev) != null ? rate(all) - rate(allPrev) : null;
+  const rows = gs.slice(0, 6).map(g => {
+    const hs = habitsFor(g.id), w = kept(hs, d), lw = kept(hs, R.addDays(d, -7));
+    const pct = Math.round(goalPct(g) * 100), col = areaColor(g.area);
+    const dw = rate(w) != null && rate(lw) != null ? rate(w) - rate(lw) : null;
+    const nx = slots.find(s => s.goalId === g.id && R.slotEnd(s) > m); // still ahead today, or nothing
+    return `<button class="prog" data-act="goal:${g.id}" style="--hc:${col}">
+      <span class="rw">${ring(pct, 50, col)}<b>${pct}%</b></span>
+      <span style="flex:1;min-width:0">
+        <span style="font-weight:600;display:block">${esc(g.statement)}</span>
+        <span class="sub" style="display:block;margin-top:2px">${w.total ? `This week ${w.done}/${w.total} kept` : 'No habits this week yet'}${
+          dw != null ? ` · <span style="color:${upDown(dw)}">${signed(dw)} pts</span>` : ''}</span>
+        ${nx ? `<span class="sub" style="display:block;color:var(--hc)">Next: ${esc(nx.name)} at ${esc(nx.at)}</span>` : ''}
+      </span><span class="chev">›</span></button>`;
+  }).join('');
+  return `<div class="card"><h2>${ic('sprout')} Your program</h2>
+    <p class="sub" style="margin:0 0 4px">${all.total ? `This week: ${all.done} of ${all.total} habit check-ins kept` : 'Nothing scheduled this week yet'}${
+      dAll != null ? ` · <span style="color:${upDown(dAll)}">${signed(dAll)} pts vs last week</span>` : ''}</p>
+    ${rows}</div>`;
+}
+
+/** Each slide's content on its own, so the minute tick can patch them in place. */
+function dashParts() {
   const d = today();
   const ctx = indexCtx();
   const from = rangeStart();
@@ -978,8 +2184,43 @@ function viewDash() {
   const hs = scheduledOn(d);
   const pct = hs.length ? Math.round((hs.reduce((s, h) => s + habitProgress(h, d), 0) / hs.length) * 100) : 0;
   const doneCount = hs.filter(h => habitDone(h, d)).length;
+  const brief = briefData();
+  const bd = R.addDays(d, S.briefShift || 0); // the day the brief is showing
 
-  let out = `<div class="card hero">
+  // The clock with now and next; then, on its own so a phone can put the day first,
+  // anything waiting on a decision.
+  const nn = nowNextCard(brief.sched.placed);
+  let c4 = '';
+  // The plan lives in a file beside the app; until it's in, say so where it can't be missed.
+  if (!DB.goals.some(g => String(g.id).startsWith('p1g-'))) c4 += `<button class="card coachcard" data-act="loadPlan">
+    <div class="row"><span class="cico">${glyph('🎯')}</span><span style="flex:1"><strong>Load my 2027 plan</strong><br>
+      <span class="hint">Your goals with the habits, tasks, cards and applications behind each one.</span></span>
+      <span class="chev">›</span></div></button>`;
+  const adj = DB.memory.filter(m => m.d === d && m.coll && !m.undone).length;
+  if (adj) c4 += `<button class="card coachcard" data-act="growto:goals">
+    <div class="row"><span class="cico">${glyph('🧭')}</span><span style="flex:1">The plan adjusted ${adj} thing${adj === 1 ? '' : 's'}
+      today to fit what you got done.</span><span class="chev">›</span></div></button>`;
+  c4 += todayPlanCard();
+  c4 += queueCard(); // last: the longest list scrolls inside its column
+
+  // The program, and today's habits beside it.
+  let out = `<div class="card"><h2>${ic('repeat')} Today's habits</h2>`;
+  if (!hs.length) out += `<p class="hint">No habits due today. Tap + to add one.</p>`;
+  else out += `<div class="strip">${hs.map(chip).join('')}</div>`;
+  out += `</div>`;
+
+  const tips = R.coach(coachCtx());
+  let coachHTML = '';
+  if (tips.length) {
+    const top = tips[0];
+    coachHTML = `<button class="card coachcard ${esc(top.tone)}" data-act="coach">
+      <div class="row" style="align-items:flex-start"><span class="cico">${glyph(top.icon)}</span>
+        <span style="flex:1"><span class="sub" style="display:block;margin-bottom:3px">Companion</span>
+          ${esc(top.text)}</span>
+        <span class="chev">›</span></div></button>`;
+  }
+
+  let pr = `<div class="card hero">
     <div class="sub">Overall · ${esc(rangeName() === 'ALL' ? 'all time' : 'past ' + rangeName())}</div>
     <div class="heroNum" id="heroVal" data-to="${avg}">${avg}%</div>
     <div class="heroDelta" id="heroSub" style="color:${col}">${signed(delta)} pts vs the stretch before</div>
@@ -988,29 +2229,6 @@ function viewDash() {
       `<button data-act="range:${r[1]}" aria-pressed="${S.range === r[1]}">${r[0]}</button>`).join('')}</div>
     <p class="hint" style="margin-top:4px;text-align:center">Drag across the chart for any day</p>
   </div>`;
-  out += dailyBrief();
-
-  // The plan lives in a file beside the app; until it's in, say so where it can't be missed.
-  if (!DB.goals.some(g => String(g.id).startsWith('p1g-'))) out += `<button class="card coachcard" data-act="loadPlan">
-    <div class="row"><span class="cico">🎯</span><span style="flex:1"><strong>Load my 2027 plan</strong><br>
-      <span class="hint">Your goals with the habits, tasks, cards and applications behind each one.</span></span>
-      <span class="chev">›</span></div></button>`;
-  out += queueCard();
-  const adj = DB.memory.filter(m => m.d === d && m.coll && !m.undone).length;
-  if (adj) out += `<button class="card coachcard" data-act="growto:goals">
-    <div class="row"><span class="cico">🧭</span><span style="flex:1">The plan adjusted ${adj} thing${adj === 1 ? '' : 's'}
-      today to fit what you got done.</span><span class="chev">›</span></div></button>`;
-  out += todayPlanCard();
-
-  const tips = R.coach(coachCtx());
-  if (tips.length) {
-    const top = tips[0];
-    out += `<button class="card coachcard ${esc(top.tone)}" data-act="coach">
-      <div class="row" style="align-items:flex-start"><span class="cico">${top.icon}</span>
-        <span style="flex:1"><span class="sub" style="display:block;margin-bottom:3px">Companion</span>
-          ${esc(top.text)}</span>
-        <span class="chev">›</span></div></button>`;
-  }
 
   // The three positions. Same shape as a holdings list: what it is, how it has moved,
   // where it stands.
@@ -1040,9 +2258,8 @@ function viewDash() {
   const ptsColor = n => (n == null ? 'var(--dim)' : upDown(n));
   const hDelta = trackDelta('habits'), tDelta = trackDelta('tasks'), lDelta = trackDelta('learn');
   const ret = R.retention(liveCards(), d);
-  const openGoals = liveGoals().length;
 
-  out += `<div class="card"><h2>${ic('layers')} Tracks</h2>
+  let tr = `<div class="card"><h2>${ic('layers')} Tracks</h2>
     ${trackRow({
       act: 'tab:habits', icon: ic('repeat'), color: 'var(--tint)', name: 'Habits',
       sub: hs.length ? `${doneCount} of ${hs.length} done today` : 'nothing scheduled today',
@@ -1072,68 +2289,150 @@ function viewDash() {
     }) : ''}`;
   if (bud) {
     const ratio = Math.min(spentMonth / bud, 1) * 100;
-    out += `<div class="bar" style="margin-top:12px"><i style="width:${ratio}%;background:${
+    tr += `<div class="bar" style="margin-top:12px"><i style="width:${ratio}%;background:${
       spentMonth > bud ? 'var(--red)' : ratio > 80 ? 'var(--orange)' : 'var(--green)'}"></i></div>
       <p class="hint" style="margin-top:8px">${spentMonth > bud
         ? esc(money(spentMonth - bud)) + ' over this month’s budget'
         : esc(money(bud - spentMonth)) + ' left of this month’s budget'}</p>`;
   }
-  out += `</div>`;
+  tr += `</div>`;
 
-  if (openGoals) {
-    out += `<div class="card"><h2>${ic('target')} What it is all for</h2>${liveGoals().slice(0, 4).map(g => goalCard(g, true)).join('')}</div>`;
-  }
-
-  out += `<div class="card"><h2>${ic('repeat')} Today's habits</h2>`;
-  if (!hs.length) out += `<p class="hint">No habits due today. Tap + to add one.</p>`;
-  else out += `<div class="strip">${hs.map(chip).join('')}</div>`;
-  out += `</div>`;
-
-  return out;
+  // The figures each slide's banner carries.
+  const bdb = bd === d ? brief : briefData(bd);
+  const todo = [...bdb.late, ...bdb.sched.placed, ...bdb.sched.anytime].filter(s => !s.block && !s.part);
+  const wkDays = R.weekdayOf(d) + 1; // the week so far
+  const wk = liveHabits().reduce((a, x) => { const r = R.completionRate(x, logValue, d, wkDays); return [a[0] + r.done, a[1] + r.total]; }, [0, 0]);
+  return {
+    info: infoPanel(brief), cal: calPane(),
+    today: heroBand(bd === d ? 'Today' : DAYN[R.weekdayOf(bd)], dayTitle(bd), 'today',
+      [[`${todo.filter(s => !s.done).length}/${todo.length}`, 'left to do'], [String(bdb.late.length), 'overdue'],
+       [`${doneCount}/${hs.length}`, 'habits done']]) +
+      `<div class="duo"><div>${nn}${c4}</div><div>${dailyBrief(bdb, bd)}</div></div>`,
+    program: heroBand('Program', 'Your goals, the habits behind them, and this week against last', 'program',
+      [[String(liveGoals().length), 'goals'], [`${wk[0]}/${wk[1]}`, 'check-ins this week'],
+       [wk[1] ? Math.round((wk[0] / wk[1]) * 100) + '%' : '—', 'kept this week']]) +
+      `<div class="duo"><div>${programCard()}</div><div>${coachHTML}${out}</div></div>`,
+    progress: heroBand('Progress', 'One number for every day, and the tracks that move it', 'progress',
+      [[avg + '%', 'overall, ' + (rangeName() === 'ALL' ? 'all time' : rangeName())], [signed(delta) + ' pts', 'vs the stretch before'],
+       [pct + '%', 'habits today']]) + `<div class="duo"><div>${pr}</div><div>${tr}</div></div>`,
+  };
 }
 
-/** The morning brief: everything on today, overdue first, then by the clock, then any time. */
-function dailyBrief() {
+
+// ---------- photo banners ----------
+// The Home panel's idea, once per section: a landscape behind the title, and the two or
+// three numbers that section answers in the same frosted cards as the weather. Each
+// section keeps its own scene so it has an identity; the cards below stay plain paper,
+// because a photograph behind a list or a form only makes it harder to read.
+const SECTION_SCENE = { today: 'yosemite', program: 'dolomites', progress: 'paine',
+  habits: 'kirkjufell', task: 'monumentvalley', grow: 'matterhorn', fin: 'grandcanyon' };
+const sceneOf = key => SCENES.find(s => s.f === SECTION_SCENE[key]) || SCENES[0];
+function heroBand(title, sub, key, stats) {
+  const s = sceneOf(key);
+  const card = ([v, label, act]) => act
+    ? `<button class="glass hb-stat" data-act="${act}"><b>${esc(v)}</b><small>${esc(label)}</small></button>`
+    : `<div class="glass hb-stat"><b>${esc(v)}</b><small>${esc(label)}</small></div>`;
+  return `<div class="shead hero-band">
+    <img class="hb-img" src="scenes/${s.f}.jpg" alt="" aria-hidden="true" decoding="async">
+    <div class="hb-text"><h1>${esc(title)}</h1><p>${esc(sub)}</p></div>
+    ${stats && stats.length ? `<div class="hb-stats">${stats.map(card).join('')}</div>` : ''}
+    <span class="hb-cap">${ic('compass')} ${esc(s.place)} · ${esc(s.by)}, ${esc(s.lic)}</span>
+  </div>`;
+}
+
+/** The figures each workspace opens with. */
+function sectionStats(tab) {
   const d = today();
-  const slots = daySlots(d);
-  // Planned sessions from Grow → Plan live in the engine's own calendar, not DB.
-  if (!PLAN) PLAN = planLoad();
-  if (!PLAN.error) {
-    const t0 = R.fromYMD(d).getTime(), t1 = R.fromYMD(R.addDays(d, 1)).getTime();
-    PLAN.u.list('session', s => s.status === 'planned' && s.start >= t0 && s.start < t1).forEach(s => slots.push({
-      at: new Date(s.start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: PLAN.u.tz }),
-      act: 'growto:plan', icon: '📅', name: s.title, color: 'var(--purple)', done: false, meta: `${s.minutes} min`,
-    }));
+  if (tab === 'habits') {
+    const hs = scheduledOn(d), done = hs.filter(x => habitDone(x, d)).length;
+    const best = Math.max(0, ...liveHabits().map(streakOf));
+    const k = liveHabits().reduce((a, x) => { const r = R.completionRate(x, logValue, d, 30); return [a[0] + r.done, a[1] + r.total]; }, [0, 0]);
+    return [[`${done}/${hs.length}`, 'done today'], [String(best), best === 1 ? 'day, best streak' : 'days, best streak'],
+            [k[1] ? Math.round((k[0] / k[1]) * 100) + '%' : '—', 'kept, 30 days']];
   }
-  const late = DB.tasks.filter(isOverdue).map(t => ({
-    at: null, act: `tbrief:${t.id}`, tick: `taskdone:${t.id}`, icon: '☑️', name: t.title,
-    done: false, meta: fmtDue(t.due), late: true,
-  }));
-  const sched = R.daySchedule(slots);
-  const items = [...late, ...sched.placed, ...sched.anytime];
-  const todo = items.filter(s => !s.block); // routine blocks show the day; only these count
-  const left = todo.filter(s => !s.done);
-  const n = new Date(), nowMins = n.getHours() * 60 + n.getMinutes();
-  const next = sched.placed.find(s => !s.done && s.mins >= nowMins);
+  if (tab === 'task') {
+    const wk = R.addDays(d, -6);
+    return [[String(openTasks().length), 'open'], [String(DB.tasks.filter(isOverdue).length), 'overdue'],
+            [String(DB.tasks.filter(t => t.done && t.completedAt && t.completedAt >= wk).length), 'done this week']];
+  }
+  if (tab === 'fin') {
+    const spent = R.spend(monthTxns(R.monthKey(d)).map(t => t.amount)), bud = budgetTotal();
+    return [[money0(spent), 'spent this month'], [bud ? money0(bud - spent) : '—', bud ? 'left in budget' : 'no budget set'],
+            [money0(DB.accounts.reduce((s, a) => s + accountBalance(a), 0)), 'net worth']];
+  }
+  if (tab === 'grow') {
+    const gs = liveGoals();
+    return [[String(gs.length), gs.length === 1 ? 'goal' : 'goals'],
+            [gs.length ? Math.round((gs.reduce((s, g) => s + goalPct(g), 0) / gs.length) * 100) + '%' : '—', 'average progress'],
+            [String(dueNow().length), 'cards due', 'growto:learn']];
+  }
+  return [];
+}
 
-  const summary = !items.length ? 'Nothing on today. Tap + to add something.'
-    : !todo.length ? 'Your routine for today.'
-    : !left.length ? `All ${todo.length} done. Good day.`
-    : [`${left.length} of ${todo.length} left`,
-       late.length && `${late.length} overdue`,
-       next && `next: ${next.name} at ${next.at}`].filter(Boolean).join(' · ');
+// The home is a deck of slides you swipe, tap or arrow through, like a presentation.
+// Home is the smart-calendar screen; the rest is what used to be one long scroll.
+const SLIDES = [['home', 'Home'], ['today', 'Today'], ['program', 'Program'], ['progress', 'Progress']];
+const slideHead = (t, sub) => `<div class="shead"><h1>${esc(t)}</h1><p>${esc(sub)}</p></div>`;
 
-  const row = s => `<li>
-    <span class="sub" style="flex:0 0 40px;padding-top:3px;font-variant-numeric:tabular-nums">${esc(s.at || '')}</span>
-    ${s.tick && !s.done ? `<button class="tick" data-act="${s.tick}">○</button>` : `<span class="tick">${s.done ? '✅' : esc(s.icon)}</span>`}
-    <div style="flex:1" data-act="${s.act}"><div class="${s.done ? 'strike' : ''}"${s === next ? ' style="font-weight:600"' : ''}>${esc(s.name)}</div>
-      ${s.meta || s.late || s === next ? `<div class="meta">${s.late ? `<span style="color:var(--red)">overdue · ${esc(s.meta)}</span>`
-        : s.meta ? `<span>${esc(s.meta)}</span>` : ''}${s === next ? '<span style="color:var(--tint)">up next</span>' : ''}</div>` : ''}
-    </div></li>`;
+function viewDash() {
+  const p = dashParts();
+  return `<div class="sdeck" id="deck">
+    <section class="slide s-home" aria-label="Home"><div class="home2">
+      <aside class="info">${sceneHTML()}<div class="info-body" id="dp-info">${p.info}</div></aside>
+      <div class="card calpane" id="dp-cal">${p.cal}</div></div></section>
+    ${SLIDES.slice(1).map(([k, l]) => `<section class="slide" aria-label="${l}"><div class="sbody" id="dp-${k}">${p[k]}</div></section>`).join('')}
+  </div>`;
+}
 
-  return `<div class="card"><h2>${ic('clock')} Daily brief</h2>
-    <p class="sub" style="margin:0 0 6px">${esc(dayTitle(d))} · ${esc(summary)}</p>
-    ${items.length ? `<ul class="list">${items.map(row).join('')}</ul>` : ''}</div>`;
+/** A tick or a check-in on Today repaints each slide's insides, not the deck: the slide you
+    are on, its scroll, and the photo mid-fade all stay put. */
+function patchDash() {
+  const p = dashParts();
+  Object.keys(p).forEach(k => { const el = document.getElementById('dp-' + k); if (el) el.innerHTML = p[k]; });
+}
+
+const pillsHTML = () => '<i class="thumb" aria-hidden="true"></i>' + SLIDES.map(([, l], i) =>
+  `<button role="tab" data-act="slide:${i}" aria-current="${S.tab === 'dash' && S.slide === i}">${l}</button>`).join('');
+
+/** Slide a bar's marker under its current item; with none current (a workspace is open,
+    so no slide is), it fades away. Positions come from layout, so fonts loading or the
+    window resizing calls this again. */
+function placeThumb(box) {
+  if (!box || !box.querySelector) return;
+  const t = box.querySelector('.thumb'), on = box.querySelector('[aria-current="true"],[aria-current="page"]');
+  if (!t || !t.style) return;
+  if (!on || !on.offsetWidth) { t.style.opacity = '0'; return; }
+  t.style.opacity = '1';
+  t.style.width = on.offsetWidth + 'px';
+  t.style.transform = `translateX(${on.offsetLeft}px)`;
+}
+const placeThumbs = () => { placeThumb(document.getElementById('pills')); placeThumb(document.querySelector('#tabs .tabtrack')); };
+function markPills() {
+  document.querySelectorAll('#pills button').forEach((b, i) => b.setAttribute('aria-current', String(S.tab === 'dash' && S.slide === i)));
+  document.querySelectorAll('#tabs button').forEach(b =>
+    b.setAttribute('aria-current', b.dataset.act === 'tab:' + S.tab ? 'page' : 'false'));
+  placeThumbs();
+}
+function goSlide(i) {
+  const deck = document.getElementById('deck');
+  S.slide = Math.max(0, Math.min(SLIDES.length - 1, i));
+  markPills();
+  if (deck && deck.scrollTo) deck.scrollTo({ left: S.slide * deck.clientWidth, behavior: reduced() ? 'auto' : 'smooth' });
+}
+function wireDeck() {
+  const deck = document.getElementById('deck');
+  if (!deck || !deck.addEventListener || !window.requestAnimationFrame) return;
+  deck.style.scrollBehavior = 'auto';
+  deck.scrollLeft = S.slide * deck.clientWidth;
+  deck.style.scrollBehavior = '';
+  let raf = 0;
+  deck.addEventListener('scroll', () => {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      const i = Math.round(deck.scrollLeft / Math.max(1, deck.clientWidth));
+      if (i !== S.slide) { S.slide = i; markPills(); }
+    });
+  }, { passive: true });
 }
 
 function chip(h) {
@@ -1143,12 +2442,11 @@ function chip(h) {
   const v = logValue(h.id, d), g = R.goalOf(h);
   const label = h.kind === 'checkbox' ? (p >= 100 ? '✓ Done' : 'Check in')
     : h.kind === 'timer' ? `${Math.round(v)} / ${g} min` : `${Math.round(v)} / ${g}`;
-  return `<div class="chip">
-    <div class="top"><span>${esc(h.icon)}</span>${st ? `<span class="flame">${ic('flame')}${st}</span>` : ''}</div>
+  return `<div class="chip" style="--hc:${esc(h.color)}">
+    <div class="top"><span>${glyph(h.icon)}</span>${st ? `<span class="flame">${ic('flame')}${st}</span>` : ''}</div>
     <button class="nm" data-act="hbrief:${h.id}" style="text-align:left;display:block;width:100%">${esc(h.name)}</button>
-    <div class="bar"><i style="width:${p}%;background:${esc(h.color)}"></i></div>
-    <button class="act" data-act="hquick:${h.id}"
-      style="background:${esc(h.color)}22;color:${esc(h.color)}">${esc(label)}</button>
+    <div class="bar"><i style="width:${p}%"></i></div>
+    <button class="act${p >= 100 ? ' on' : ''}" data-act="hquick:${h.id}">${esc(label)}</button>
   </div>`;
 }
 
@@ -1215,7 +2513,7 @@ function habitCard(h) {
   const done = habitDone(h, d);
   return `<div class="card hcard" style="--hc:${esc(h.color)}">
     <div class="row">
-      <span class="hico">${esc(h.icon)}</span>
+      <span class="hico">${glyph(h.icon)}</span>
       <button style="flex:1;text-align:left" data-act="hbrief:${h.id}">
         <div style="font-weight:600">${esc(h.name)} <span class="chev" style="font-size:15px">›</span></div>
         <div class="sub">${st ? `<span class="flame">${ic('flame')}</span> ${st} day${st > 1 ? 's' : ''}` : 'no streak yet'}
@@ -1266,14 +2564,14 @@ function shareGrid(hid) {
   cv.width = w * k; cv.height = tall * k;
   const c = cv.getContext('2d');
   c.scale(k, k);
-  const dark = !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  const dark = isDark();
   const font = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,sans-serif';
   c.fillStyle = dark ? '#101012' : '#ffffff';
   c.fillRect(0, 0, w, tall);
 
   c.fillStyle = dark ? '#ffffff' : '#000000';
   c.font = `600 20px ${font}`;
-  c.fillText(`${h.icon} ${h.name}`, pad, pad + 20);
+  c.fillText(h.name, pad, pad + 20); // the image carries the name; an emoji would print in the OS's own style
   const st = streakOf(h), r = R.completionRate(h, logValue, today(), 30);
   c.fillStyle = dark ? '#98989f' : '#6c6c70';
   c.font = `14px ${font}`;
@@ -1349,9 +2647,9 @@ function coachSheet() {
     </div>
     <div class="card"><h2>${ic('message')} What I would do next</h2>
       ${tips.length ? tips.slice(0, 7).map(x => x.act
-        ? `<button class="tip" data-act="${esc(x.act)}"><span class="cico">${x.icon}</span>
+        ? `<button class="tip" data-act="${esc(x.act)}"><span class="cico">${glyph(x.icon)}</span>
              <span style="flex:1">${esc(x.text)}</span><span class="chev">›</span></button>`
-        : `<div class="tip"><span class="cico">${x.icon}</span>
+        : `<div class="tip"><span class="cico">${glyph(x.icon)}</span>
              <span style="flex:1">${esc(x.text)}</span></div>`).join('')
         : '<p class="hint">Nothing worth flagging. Keep going.</p>'}
       <p class="hint" style="margin-top:12px">Worked out on this phone from your own logs —
@@ -1359,7 +2657,7 @@ function coachSheet() {
     </div>
     <div class="card"><h2>${ic('bars')} Weakest first</h2>
       ${rows.length ? rows.map(x => `<div style="margin-bottom:14px">
-        <div class="row"><span>${esc(x.h.icon)} ${esc(x.h.name)}</span><span class="spacer"></span>
+        <div class="row"><span>${glyph(x.h.icon)} ${esc(x.h.name)}</span><span class="spacer"></span>
           <span class="sub mono">${Math.round(x.r.rate * 100)}%${x.st ? ' · ' + ic('flame') + x.st : ''}</span></div>
         <div class="bar" style="margin-top:6px"><i style="width:${Math.round(x.r.rate * 100)}%;background:${esc(x.h.color)}"></i></div>
       </div>`).join('') : '<p class="hint">No habits yet.</p>'}
@@ -1577,21 +2875,7 @@ function gDesired(map) {
   const tag = key => ({ private: { p1src: 'project1', p1id: key } });
   const quiet = { useDefault: false, overrides: [] }; // the app does its own nudging
   const goalName = id => { const g = goalById(id); return g ? ' · ' + g.statement : ''; };
-  const BYDAY = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-  liveHabits().filter(h => h.at && !h.gcalOff && R.minutesOf(h.at) != null).forEach(h => {
-    let rule;
-    if (h.schedule === 'daily') rule = 'RRULE:FREQ=DAILY';
-    else if (h.schedule === 'monthly') rule = `RRULE:FREQ=MONTHLY;BYMONTHDAY=${h.monthDay || 1}`;
-    else if ((h.weekdays || []).length) rule = 'RRULE:FREQ=WEEKLY;BYDAY=' + h.weekdays.map(w => BYDAY[w]).join(',');
-    else return;
-    let first = map[h.id] && map[h.id].first;
-    if (!first) { first = d0; for (let i = 0; i < 31 && !R.isScheduled(h, first); i++) first = R.addDays(first, 1); }
-    const a = R.minutesOf(h.at), dur = h.minutes || (h.kind === 'timer' ? h.target : 15) || 15;
-    out.push({ key: h.id, first, start: `${first}T${h.at}`, body: {
-      summary: `${h.icon || ''} ${h.name}`.trim(), description: 'Project 1% habit' + goalName(h.goalId),
-      start: { dateTime: `${first}T${h.at}:00`, timeZone: tz }, end: { dateTime: `${first}T${R.hhmm(Math.min(a + dur, 1439))}:00`, timeZone: tz },
-      recurrence: [rule], reminders: quiet, extendedProperties: tag(h.id) } });
-  });
+  // Habits stay off Google Calendar: the day's schedule lives on Today, fitted around your events.
   const allDay = (key, date, summary, description) => out.push({ key, start: date, body: {
     summary, description, start: { date }, end: { date: R.addDays(date, 1) }, transparency: 'transparent', reminders: quiet, extendedProperties: tag(key) } });
   DB.tasks.filter(t => t.goalId && t.due && !t.gcalOff && (!t.done || (t.completedAt && R.daysBetween(t.completedAt, d0) <= 30)))
@@ -1693,6 +2977,18 @@ function clashProposal(c) {
       goalId: h.goalId || null, habitId: h.id, deep: false, subtasks: [] } }] };
 }
 
+/** A one-off event on your own calendar, offered as an event on the day so the day works around it. */
+function eventProposal(c) {
+  if (DB.tasks.some(t => t.gid === c.id)) return null;
+  const end = R.hhmm(R.minutesOf(c.at) + c.mins);
+  return { ref: c.ref, src: 'gcal', text: `“${c.summary}” is on your calendar ${fmtDue(c.day)}, ${c.at}–${end}. Put it on the day so the schedule works around it?` +
+      (c.career ? ' It looks like career work: it covers that day’s networking and career blocks, the work it cuts moves into that slot, and ticking it counts as the day’s networking and applications.' : ''),
+    ops: [{ op: 'add', coll: 'tasks', rec: { id: 'ev-' + c.id.replace(/[^a-z0-9]/gi, '').slice(-24), created: today(), done: false,
+      title: c.summary, notes: '', due: c.day, dueTime: c.at, mins: c.mins, career: c.career, gid: c.id,
+      gcalOff: true, // it's already on your calendar
+      project: 'Work', priority: 1, goalId: c.career ? 'p1g-offer' : null, habitId: null, deep: false, subtasks: [] } }] };
+}
+
 async function syncGoogle(manual) {
   if (!gToken()) { if (manual) googleConnect(); return; }
   const g = DB.gsync, tz = tzName(), items = [];
@@ -1702,13 +2998,17 @@ async function syncGoogle(manual) {
       const mine = await gList({ privateExtendedProperty: 'p1src=project1', showDeleted: 'true', maxResults: '250' });
       R.gcalPulled(mine, g.map, tz).forEach(c => items.push(pullProposal(c)));
     }
-    const ahead = await gList({ timeMin: new Date().toISOString(), timeMax: new Date(Date.now() + 14 * 864e5).toISOString(), singleEvents: 'true', maxResults: '250' });
-    R.gcalClashes(ahead, liveHabits(), today(), 14, tz).forEach(c => items.push(clashProposal(c)));
+    const ahead = await gList({ timeMin: R.fromYMD(today()).toISOString(), timeMax: new Date(Date.now() + 14 * 864e5).toISOString(), singleEvents: 'true', maxResults: '250' });
+    // One-off events become events on the day; only repeating ones still ask for a make-up session.
+    R.gcalEvents(ahead, today(), 14, tz).forEach(c => items.push(eventProposal(c)));
+    // The whole calendar, for Today and the calendar views. The last 30 days stay for looking back.
+    g.events = (g.events || []).filter(e => e.day < today() && e.day >= R.addDays(today(), -30)).concat(R.gcalAgenda(ahead, today(), 14, tz));
+    R.gcalClashes(ahead.filter(ev => ev.recurringEventId), liveHabits(), today(), 14, tz).forEach(c => items.push(clashProposal(c)));
     items.push(...R.mailProposals(await gMail(), DB.apps, DB.tasks));
     if (g.pushOK) await gPush();
     else {
       const n = gDesired(g.map).length;
-      items.push({ ref: 'gcal-first-push', src: 'gcal', text: `Put your plan on Google Calendar: ${n} events (habit blocks, goal tasks, application dates, and a weekly progress line). They stay in sync after this?`, ops: [{ op: 'gpush' }] });
+      items.push({ ref: 'gcal-first-push', src: 'gcal', text: `Put your plan on Google Calendar: ${n} events (goal tasks, application dates, and a weekly progress line). They stay in sync after this?`, ops: [{ op: 'gpush' }] });
     }
     const n = queueAdd(items.filter(Boolean));
     g.lastSync = Date.now(); g.err = null;
@@ -2032,7 +3332,7 @@ function growGoals() {
   Object.keys(AREAS).forEach(area => {
     const mine = gs.filter(g => g.area === area);
     if (!mine.length) return;
-    out += `<div class="card"><h2>${AREAS[area]} ${area}</h2>${mine.map(g => goalCard(g)).join('')}</div>`;
+    out += `<div class="card"><h2>${glyph(AREAS[area])} ${area}</h2>${mine.map(g => goalCard(g)).join('')}</div>`;
   });
   if (gs.length) out += `<button class="btn sec" data-act="goalnew">New goal</button>`;
   const orphans = liveHabits().filter(h => !h.goalId);
@@ -2041,7 +3341,7 @@ function growGoals() {
       <p class="hint">These habits are not attached to any goal. That is fine for a few —
         but a habit you cannot connect to something you want is a habit you will drop.</p>
       <ul class="list">${orphans.map(h => `<li data-act="hedit:${h.id}">
-        <span class="tick">${esc(h.icon)}</span><span style="flex:1">${esc(h.name)}</span>
+        <span class="tick">${glyph(h.icon)}</span><span style="flex:1">${esc(h.name)}</span>
         <span class="sub">attach ›</span></li>`).join('')}</ul></div>`;
   return out;
 }
@@ -2108,11 +3408,11 @@ function growLearn() {
     cards.forEach(c => { (by[c.goalId || ''] = by[c.goalId || ''] || []).push(c); });
     Object.keys(by).sort().forEach(gid => {
       const g = goalById(gid);
-      out += `<div class="card"><h2>${g ? esc(g.statement) : '📇 Unfiled'}</h2>
+      out += `<div class="card"><h2>${g ? esc(g.statement) : 'Unfiled'}</h2>
         <ul class="list">${by[gid].slice(0, 12).map(c => {
           const isDue = !c.due || c.due <= t;
           return `<li data-act="cardedit:${c.id}">
-            <span class="tick">${(c.lapses || 0) >= 4 ? '🩹' : isDue ? '🔵' : '✅'}</span>
+            <span class="tick">${glyph((c.lapses || 0) >= 4 ? '🩹' : isDue ? '🔵' : '✅')}</span>
             <div style="flex:1"><div>${esc(c.front)}</div>
               <div class="meta"><span>box ${(c.box || 0) + 1}/${R.BOXES.length}</span>
                 <span>${isDue ? 'due now' : 'due ' + esc(fmtDue(c.due))}</span>
@@ -2156,7 +3456,7 @@ function growPractice() {
       <span class="tick">${'●'.repeat(Math.max(1, s.difficulty || 1))}</span>
       <div style="flex:1"><div>${esc(s.focus || 'unnamed session')}</div>
         <div class="meta"><span>${esc(fmtDue(s.date))}</span><span>${s.minutes || 0} min</span>
-          ${g ? `<span>🎯 ${esc(g.statement)}</span>` : ''}</div>
+          ${g ? `<span>${glyph('🎯')} ${esc(g.statement)}</span>` : ''}</div>
         ${s.next ? `<div class="qa">next: ${esc(s.next)}</div>` : ''}</div></li>`;
   }).join('')}</ul></div>`;
   return out;
@@ -2205,7 +3505,7 @@ function growReview() {
     return `<span style="color:${d > 0 ? 'var(--green)' : 'var(--red)'}">${signed(d)}</span>`;
   };
   const line = (icon, label, value, delta) => `<div class="row" style="padding:9px 0">
-    <span style="width:26px">${icon}</span><span style="flex:1">${label}</span>
+    <span style="width:26px">${glyph(icon)}</span><span style="flex:1">${label}</span>
     <span style="font-weight:600">${value}</span>
     <span style="width:56px;text-align:right;font-size:12px">${delta || ''}</span></div>`;
 
@@ -2236,11 +3536,11 @@ function growReview() {
   </div>
 
   ${best.length ? `<div class="card"><h2>${ic('check-circle')} Held all week</h2><ul class="list">${best.map(x =>
-    `<li><span class="tick">${esc(x.h.icon)}</span><span style="flex:1">${esc(x.h.name)}</span>
+    `<li><span class="tick">${glyph(x.h.icon)}</span><span style="flex:1">${esc(x.h.name)}</span>
       <span class="sub">${x.r.done}/${x.r.total}</span></li>`).join('')}</ul></div>` : ''}
 
   ${worst.length ? `<div class="card"><h2>${ic('alert')} Where it broke</h2><ul class="list">${worst.map(x =>
-    `<li data-act="hedit:${x.h.id}"><span class="tick">${esc(x.h.icon)}</span>
+    `<li data-act="hedit:${x.h.id}"><span class="tick">${glyph(x.h.icon)}</span>
       <div style="flex:1"><div>${esc(x.h.name)}</div>
       <div class="meta"><span>${x.r.done} of ${x.r.total}</span>
         ${x.h.cue ? '' : '<span style="color:var(--orange)">no trigger set</span>'}</div></div></li>`).join('')}</ul>
@@ -2279,7 +3579,7 @@ function goalSheet(id) {
 
     <label class="f">Area</label>
     <select id="gArea">${Object.keys(AREAS).map(a =>
-      `<option ${d.area === a ? 'selected' : ''}>${AREAS[a]} ${a}</option>`).join('')}</select>
+      `<option ${d.area === a ? 'selected' : ''}>${a}</option>`).join('')}</select>
 
     <label class="f">Who that makes you</label>
     <input id="gIdent" value="${esc(d.identity || '')}" placeholder="I am someone who reads every day" autocapitalize="sentences">
@@ -2456,7 +3756,7 @@ function goalDetail(id) {
       : '<p class="hint">No tasks under this goal yet.</p>'))}
     ${para('Habits behind it', (hs.length ? `<ul class="list">${hs.map(h => {
         const r = R.completionRate(h, logValue, today(), 30);
-        return `<li data-act="hbrief:${h.id}"><span class="tick">${esc(h.icon)}</span>
+        return `<li data-act="hbrief:${h.id}"><span class="tick">${glyph(h.icon)}</span>
           <div style="flex:1"><div>${esc(h.name)}</div>
           <div class="meta"><span>${esc(schedText(h))}</span><span>${Math.round(r.rate * 100)}% of 30 days</span></div></div><span class="chev">›</span></li>`;
       }).join('')}</ul>` : `<p class="hint">Nothing daily is serving this goal, which means nothing is moving it.
@@ -2500,7 +3800,7 @@ function habitBrief(id) {
     const ladder = (h.ladder || []).slice().sort((a, b) => a - b);
     const unit = h.kind === 'timer' ? ' min' : '';
     return `<div class="card hcard" style="--hc:${esc(h.color)}">
-      <div class="row"><span class="hico">${esc(h.icon)}</span>
+      <div class="row"><span class="hico">${glyph(h.icon)}</span>
         <div style="flex:1"><div style="font-weight:600">${esc(h.name)}</div><div class="sub">${esc(schedText(h))}</div></div></div>
       <div class="row" style="margin-top:12px;gap:18px">
         <div><div class="big" style="font-size:26px">${st}</div><div class="hint">day streak</div></div>
@@ -2817,10 +4117,10 @@ function inboxSheet() {
         <div style="margin-bottom:10px">${esc(x.text)}</div>
         <div class="sub" style="margin-bottom:10px">caught ${esc(fmtDue(x.created))}</div>
         <div class="picks">
-          <button data-act="inboxTo:task|${x.id}">☑️ Task</button>
-          <button data-act="inboxTo:card|${x.id}">🧠 Card</button>
-          <button data-act="inboxTo:goal|${x.id}">🎯 Goal</button>
-          <button data-act="inboxTo:habit|${x.id}">🔁 Habit</button>
+          <button data-act="inboxTo:task|${x.id}">${glyph('☑️')} Task</button>
+          <button data-act="inboxTo:card|${x.id}">${glyph('🧠')} Card</button>
+          <button data-act="inboxTo:goal|${x.id}">${glyph('🎯')} Goal</button>
+          <button data-act="inboxTo:habit|${x.id}">${glyph('🔁')} Habit</button>
           <button data-act="inboxDel:${x.id}" style="color:var(--red)">Bin</button>
         </div></div>`).join('');
   };
@@ -2890,7 +4190,7 @@ function todayPlanCard() {
       ${p.one ? `<div class="intent" style="margin-top:0;margin-bottom:12px">
         The one thing: <b>${esc(p.one)}</b></div>` : ''}
       ${rows.length ? `<ul class="list">${rows.map((t, i) => `<li>
-        <button class="tick" data-act="taskdone:${t.id}">${t.done ? '✅' : '○'}</button>
+        <button class="tick" data-act="taskdone:${t.id}">${tickMark(t.done)}</button>
         <div style="flex:1" data-act="tbrief:${t.id}">
           <div class="${t.done ? 'strike' : ''}"${!t.done && t === nextUp ? ' style="font-weight:600"' : ''}>${i + 1}. ${esc(t.title)}</div>
           ${!t.done && t === nextUp ? '<div class="meta"><span style="color:var(--tint)">start here</span></div>' : ''}
@@ -2943,7 +4243,7 @@ function growScorecard() {
   ${live.map(h => {
     const r = R.completionRate(h, logValue, today(), 30);
     return `<div class="card" style="--hc:${esc(h.color)}">
-      <div class="row"><span class="hico">${esc(h.icon)}</span>
+      <div class="row"><span class="hico">${glyph(h.icon)}</span>
         <div style="flex:1"><div style="font-weight:600">${esc(h.name)}</div>
           <div class="sub">${Math.round(r.rate * 100)}% of 30 days${h.goalId && goalById(h.goalId)
             ? ' · ' + esc(goalById(h.goalId).statement) : ' · serves nothing'}</div></div>
@@ -2983,7 +4283,7 @@ function growQuarter() {
   const saved = (DB.reviews[t] || {}).quarter;
 
   const bar = x => `<div style="margin-bottom:13px">
-    <div class="row"><span>${esc(x.h.icon)} ${esc(x.h.name)}</span><span class="spacer"></span>
+    <div class="row"><span>${glyph(x.h.icon)} ${esc(x.h.name)}</span><span class="spacer"></span>
       <span class="sub mono">${Math.round(x.early.rate * 100)}% → ${Math.round(x.late.rate * 100)}%</span></div>
     <div class="bar" style="margin-top:6px"><i style="width:${Math.round(x.late.rate * 100)}%;background:${
       x.move >= 0 ? 'var(--green)' : 'var(--red)'}"></i></div></div>`;
@@ -3039,144 +4339,6 @@ function growReviewTab() {
 // Every day carries three marks — habits, money, tasks — whatever the heat is set to.
 // The grid was a habit heatmap with the other two tracks hidden one tap away; the
 // marks are what make it a calendar of the whole app rather than of one third of it.
-
-const CALVIEWS = [['all', 'All', 'var(--tint)'], ['habits', 'Habits', 'var(--tint)'],
-                  ['money', 'Money', 'var(--red)'], ['tasks', 'Tasks', 'var(--green)'],
-                  ['learn', 'Learn', 'var(--purple)']];
-const calColor = () => (CALVIEWS.find(v => v[0] === S.calView) || CALVIEWS[0])[2];
-
-function viewCal() {
-  let out = `<div class="seg">
-    <button data-act="calmode:day" aria-pressed="${S.calMode === 'day'}">Day</button>
-    <button data-act="calmode:month" aria-pressed="${S.calMode === 'month'}">Month</button>
-    <button data-act="calmode:year" aria-pressed="${S.calMode === 'year'}">Year</button></div>`;
-  // The track switch shades a heatmap; there is no heatmap on a single day.
-  if (S.calMode === 'day') return out + viewDay();
-  out += `<div class="seg" style="margin-top:-6px">${CALVIEWS.map(v =>
-      `<button data-act="calview:${v[0]}" aria-pressed="${S.calView === v[0]}">${v[1]}</button>`).join('')}</div>`;
-  out += S.calMode === 'month' ? monthGrid() : yearGrid();
-  out += `<div class="legend">Less
-    ${[0, .25, .5, .75, 1].map(l => `<i style="background:${heat(l, calColor())}"></i>`).join('')} More</div>
-  <div class="legend" style="margin-top:10px;gap:14px">
-    <span><i style="background:var(--tint)"></i>habits</span>
-    <span><i style="background:var(--red)"></i>money</span>
-    <span><i style="background:var(--green)"></i>tasks</span>
-    <span><i style="background:var(--purple)"></i>learning</span></div>`;
-  return out;
-}
-
-function heat(score, color) {
-  if (score == null || score <= 0) return 'var(--card2)';
-  return `color-mix(in srgb, ${color || 'var(--tint)'} ${Math.round(15 + score * 85)}%, transparent)`;
-}
-
-/** The three dots under a day number. null means that track had nothing to say. */
-function dayMarks(key) {
-  const t = today();
-  const hs = scheduledOn(key);
-  const tx = idx().tx[key] || [];
-  const tk = idx().tk[key] || [];
-  const open = tk.filter(x => !x.done).length;
-  const spent = R.spend(tx.map(x => x.amount));
-  const rv = DB.reviews[key];
-  return {
-    h: hs.length ? hs.reduce((s, x) => s + habitProgress(x, key), 0) / hs.length : null,
-    m: spent > 0 ? 'var(--red)' : R.income(tx.map(x => x.amount)) > 0 ? 'var(--green)' : null,
-    t: !tk.length ? null : !open ? 'var(--green)' : key < t ? 'var(--red)' : 'var(--orange)',
-    l: rv && rv.n ? 'var(--purple)' : null,
-  };
-}
-
-/** What the heat shows, per the selected track. */
-function daySignal(key, ctx, maxSpend) {
-  if (S.calView === 'habits') return dayScore(key);
-  if (S.calView === 'money') return maxSpend > 0 ? (idx().spendDay[key] || 0) / maxSpend : null;
-  if (S.calView === 'tasks') {
-    const tk = idx().tk[key] || [];
-    return tk.length ? tk.filter(x => x.done).length / tk.length : null;
-  }
-  if (S.calView === 'learn') {
-    const rv = DB.reviews[key];
-    return rv && rv.n ? Math.min(1, rv.n / 10) : null;
-  }
-  return R.dayIndex(key, ctx).score;
-}
-
-function dayCell(key, label, ctx, maxSpend) {
-  const t = today();
-  const m = dayMarks(key);
-  const dot = c => (c ? `<i style="background:${c}"></i>` : '<i class="off"></i>');
-  return `<button class="day${key === t ? ' today' : ''}${key > t ? ' future' : ''}"
-    data-act="calday:${key}" style="background:${heat(daySignal(key, ctx, maxSpend), calColor())}">
-    <span class="dnum">${label}</span>
-    <span class="marks">${dot(m.h == null ? null : heat(m.h, 'var(--tint)'))}${dot(m.m)}${dot(m.t)}${dot(m.l)}</span>
-  </button>`;
-}
-
-function monthGrid() {
-  const anchor = R.fromYMD(S.calAnchor);
-  const y = anchor.getFullYear(), m = anchor.getMonth();
-  const first = R.ymd(new Date(y, m, 1));
-  const total = R.daysInMonth(y, m + 1);
-  const lead = R.weekdayOf(first);
-  const t = today();
-  const ctx = indexCtx();
-
-  const keys = Array.from({ length: total }, (_, i) => R.addDays(first, i));
-  const maxSpend = Math.max(0, ...keys.map(k => idx().spendDay[k] || 0));
-
-  let cells = ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(x => `<div class="dow">${x}</div>`).join('');
-  cells += Array.from({ length: lead }, () => `<div></div>`).join('');
-  keys.forEach((key, i) => { cells += dayCell(key, i + 1, ctx, maxSpend); });
-
-  // The month in one line, across all three tracks — the thing the grid is for.
-  const past = keys.filter(k => k <= t);
-  const checkins = past.reduce((s, k) => s + scheduledOn(k).filter(h => habitDone(h, k)).length, 0);
-  const scheduled = past.reduce((s, k) => s + scheduledOn(k).length, 0);
-  const spent = R.spend(monthTxns(R.monthKey(first)).map(x => x.amount));
-  const tasks = keys.reduce((a, k) => {
-    const tk = idx().tk[k] || [];
-    return { done: a.done + tk.filter(x => x.done).length, all: a.all + tk.length };
-  }, { done: 0, all: 0 });
-
-  return `<div class="card">
-    <div class="row" style="margin-bottom:12px">
-      <button data-act="calshift:-1" style="font-size:20px;width:32px">‹</button>
-      <span class="spacer" style="text-align:center;font-weight:600">${
-        anchor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</span>
-      <button data-act="caltoday" style="font-size:13px;color:var(--tint)">Today</button>
-      <button data-act="calshift:1" style="font-size:20px;width:32px">›</button>
-    </div>
-    <div class="grid7">${cells}</div>
-    <div class="divider"></div>
-    <p class="hint">${scheduled ? `${checkins}/${scheduled} habit check-ins` : 'no habits scheduled'}
-      · ${esc(money(spent))} spent · ${tasks.all ? `${tasks.done}/${tasks.all} tasks done` : 'no tasks due'}</p>
-  </div>`;
-}
-
-function yearGrid() {
-  const year = R.fromYMD(S.calAnchor).getFullYear();
-  const start = `${year}-01-01`, end = `${year}-12-31`;
-  const ctx = indexCtx();
-  let maxSpend = 0;
-  for (let k = start; k <= end; k = R.addDays(k, 1)) maxSpend = Math.max(maxSpend, idx().spendDay[k] || 0);
-
-  let cells = Array.from({ length: R.weekdayOf(start) }, () => `<i style="background:transparent"></i>`).join('');
-  for (let key = start; key <= end; key = R.addDays(key, 1))
-    cells += `<i data-act="calday:${key}" style="background:${heat(daySignal(key, ctx, maxSpend), calColor())}"></i>`;
-
-  return `<div class="card">
-    <div class="row" style="margin-bottom:12px">
-      <button data-act="calshift:-12" style="font-size:20px;width:32px">‹</button>
-      <span class="spacer" style="text-align:center;font-weight:600">${year}</span>
-      <button data-act="caltoday" style="font-size:13px;color:var(--tint)">This year</button>
-      <button data-act="calshift:12" style="font-size:20px;width:32px">›</button>
-    </div>
-    <div class="yearwrap"><div class="year">${cells}</div></div>
-    <p class="hint" style="margin-top:10px">Each square is a day, shaded by
-      ${esc((CALVIEWS.find(v => v[0] === S.calView) || CALVIEWS[0])[1].toLowerCase())}. Tap one to open it.</p>
-  </div>`;
-}
 
 // ---------- finance ----------
 function viewFin() {
@@ -3387,7 +4549,7 @@ function viewTaskList() {
     out += `<div class="card"><h2>${esc(name)}</h2><ul class="list">${groups[name].sort(order).map(x => {
       const subs = x.subtasks || [];
       const hb = habitById(x.habitId);
-      return `<li><button class="tick" data-act="taskdone:${x.id}">${x.done ? '✅' : '○'}</button>
+      return `<li><button class="tick" data-act="taskdone:${x.id}">${tickMark(x.done)}</button>
         <div style="flex:1" data-act="tbrief:${x.id}">
           <div class="${x.done ? 'strike' : ''}">${esc(x.title)}</div>
           <div class="meta">
@@ -3416,6 +4578,7 @@ function openSheet(title, body, onMount) {
   else s.classList.add('in');
   document.body.style.overflow = 'hidden';
   if (onMount) onMount();
+  layoutSheet();
 }
 function closeSheet() {
   const s = $('#sheet');
@@ -3448,11 +4611,11 @@ function habitSheet(id, hour) {
     <input id="hName" value="${esc(d.name || '')}" placeholder="Drink water" autocapitalize="sentences">
     <label class="f">Area</label>
     <select id="hArea">${Object.keys(AREAS).map(a =>
-      `<option ${d.area === a ? 'selected' : ''}>${AREAS[a]} ${a}</option>`).join('')}</select>
+      `<option ${d.area === a ? 'selected' : ''}>${a}</option>`).join('')}</select>
 
     <label class="f">Icon</label>
     <div class="picks">${ICONS.map(i =>
-      `<button data-act="pickIcon:${i}" aria-pressed="${tmp.icon === i}">${i}</button>`).join('')}</div>
+      `<button data-act="pickIcon:${i}" aria-pressed="${tmp.icon === i}" aria-label="Icon">${glyph(i)}</button>`).join('')}</div>
 
     <label class="f">Colour</label>
     <div class="picks">${PALETTE.map(c =>
@@ -3486,14 +4649,14 @@ function habitSheet(id, hour) {
       <label class="f">Day of the month</label>
       <input id="hDay" type="number" inputmode="numeric" min="1" max="31" value="${esc(d.monthDay || 1)}">` : ''}
 
-    <label class="f">Time of day (optional)</label>
+    <label class="f">Time of day</label>
     <input id="hAt" type="time" value="${esc(d.at || '')}">
-    <p class="hint" style="margin-top:6px">Puts it on the day scheduler. Leave it blank
-      and the habit sits under “any time”.</p>
+    <p class="hint" style="margin-top:6px">Its slot on Today. An event or session at that
+      time moves or trims it for that day only.</p>
 
     <label class="f">Or right after another habit</label>
     <select id="hAfter"><option value="">— no —</option>${liveHabits().filter(x => x.id !== d.id).map(x =>
-      `<option value="${esc(x.id)}" ${d.stackAfter === x.id ? 'selected' : ''}>${esc(x.icon)} ${esc(x.name)}</option>`).join('')}</select>
+      `<option value="${esc(x.id)}" ${d.stackAfter === x.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
 
     <div class="divider"></div>
     <label class="f">Trigger — after what?</label>
@@ -3542,6 +4705,7 @@ function habitSheet(id, hour) {
     sheetSubmit = { tmp, redraw, save() {
       const name = val('hName').trim();
       if (!name) { alert('Give the habit a name.'); return; }
+      if (!val('hAt') && !val('hAfter')) { alert('Give the habit a time, or stack it after another habit.'); return; }
       const rec = h || { id: uid(), created: today(), sort: DB.habits.length };
       Object.assign(rec, {
         name, icon: tmp.icon, color: tmp.color, kind: tmp.kind, schedule: tmp.schedule,
@@ -3592,11 +4756,11 @@ function habitDaySheet(hid, day) {
     } else {
       ctl = (h.checklist || []).map(item => `<div class="check">
         <button data-act="hStepTog:${encodeURIComponent(item)}" style="font-size:20px">${
-          (log.c || []).includes(item) ? '✅' : '○'}</button>
+          tickMark((log.c || []).includes(item))}</button>
         <span style="flex:1">${esc(item)}</span></div>`).join('');
     }
     return `<div class="card">
-        <div class="row"><span style="font-size:22px">${esc(h.icon)}</span>
+        <div class="row"><span style="font-size:22px">${glyph(h.icon)}</span>
           <strong style="flex:1">${esc(h.name)}</strong>
           <span class="sub mono">${Math.round(log.v)} / ${g}</span></div>
         <div class="bar" style="margin-top:10px"><i style="width:${p}%;background:${esc(h.color)}"></i></div>
@@ -3733,15 +4897,32 @@ function taskSheet(id, day, hour) {
           <select id="tkPrio">${PRIOS.map((p, i) =>
             `<option value="${i}" ${(t ? t.priority : 1) === i ? 'selected' : ''}>${p}</option>`).join('')}</select></div>
       </div>
-      <label class="f">Due date</label>
-      <input id="tkDue" type="date" value="${esc(t ? (t.due || '') : (day || today()))}">
+      <div class="inline">
+        <div><label class="f">Scheduled date</label>
+          <input id="tkDue" type="date" value="${esc(t ? (t.due || '') : (day || today()))}"></div>
+        <div><label class="f">Scheduled time</label>
+          <input id="tkTime" type="time" value="${esc(t && t.dueTime ? t.dueTime : atHour)}"></div>
+      </div>
+      <div class="inline">
+        <div><label class="f">Deadline</label>
+          <input id="tkDeadline" type="date" value="${esc(t && t.deadline ? t.deadline : '')}"></div>
+        <div><label class="f">Deadline time</label>
+          <input id="tkDeadlineTime" type="time" value="${esc(t && t.deadlineTime ? t.deadlineTime : '')}"></div>
+      </div>
+      <p class="hint" style="margin-top:6px">The scheduled time is when you'll do it. The deadline is when it's due;
+        it shows on that day too.</p>
       <label class="check" style="margin-top:12px"><input id="tkDeep" type="checkbox" ${t && t.deep ? 'checked' : ''}>
         <span style="flex:1">Deep work — needs uninterrupted concentration</span></label>
-      <label class="f">Due time (optional)</label>
-      <input id="tkTime" type="time" value="${esc(t && t.dueTime ? t.dueTime : atHour)}">
+      <label class="f">Length in minutes, for an event (optional)</label>
+      <input id="tkMins" type="number" min="0" max="720" step="15" inputmode="numeric" value="${esc(t && t.mins ? String(t.mins) : '')}">
+      <label class="check" style="margin-top:12px"><input id="tkCareer" type="checkbox" ${t && t.career ? 'checked' : ''}>
+        <span style="flex:1">Career event (info session, interview, networking)</span></label>
+      <p class="hint" style="margin-top:6px">With a time and a length, the day works around it. A career event also covers that
+        day's networking and career blocks, the work it cuts moves into that slot, and ticking it counts as that
+        day's networking and applications.</p>
       <label class="f">Sub-tasks</label>
       ${tmp.subs.map((s, i) => `<div class="check">
-        <button data-act="subTog:${i}" style="font-size:18px">${s.done ? '✅' : '○'}</button>
+        <button data-act="subTog:${i}" style="font-size:18px">${tickMark(s.done)}</button>
         <span style="flex:1">${esc(s.title)}</span>
         <button data-act="subDel:${i}" style="color:var(--red);font-size:13px">Remove</button></div>`).join('')}
       <div class="inline" style="margin-top:8px"><input id="tkSub" placeholder="Add a sub-task">
@@ -3759,7 +4940,7 @@ function taskSheet(id, day, hour) {
   }
 
   function redraw() {
-    const keep = ['tkTitle', 'tkNotes', 'tkDue', 'tkTime'].map(id => [id, val(id)]);
+    const keep = ['tkTitle', 'tkNotes', 'tkDue', 'tkTime', 'tkDeadline', 'tkDeadlineTime', 'tkMins'].map(id => [id, val(id)]);
     $('#sheetInner').innerHTML = body();
     keep.forEach(([id, v]) => { const e = document.getElementById(id); if (e && v) e.value = v; });
   }
@@ -3768,11 +4949,15 @@ function taskSheet(id, day, hour) {
     sheetSubmit = { tmp, redraw, save() {
       const title = val('tkTitle').trim();
       if (!title) { alert('Give the task a title.'); return; }
+      if (!(val('tkDue') && val('tkTime')) && !val('tkDeadline')) { alert('Give the task a scheduled date and time, or a deadline.'); return; }
       const rec = t || { id: uid(), created: today(), done: false };
+      const career = !!(document.getElementById('tkCareer') || {}).checked, habitId = val('tkHabit') || null;
       Object.assign(rec, {
+        mins: Math.max(0, Math.min(720, parseInt(val('tkMins'), 10) || 0)) || null, career,
         title, notes: val('tkNotes').trim(), due: val('tkDue') || null, dueTime: val('tkTime') || null,
+        deadline: val('tkDeadline') || null, deadlineTime: (val('tkDeadline') && val('tkDeadlineTime')) || null,
         project: val('tkProj'), priority: parseInt(val('tkPrio'), 10) || 0,
-        subtasks: tmp.subs, habitId: val('tkHabit') || null, goalId: val('tkGoal') || null,
+        subtasks: tmp.subs, habitId, goalId: val('tkGoal') || null,
         deep: !!(document.getElementById('tkDeep') || {}).checked,
       });
       if (!t) DB.tasks.push(rec);
@@ -3787,9 +4972,16 @@ function completeTask(id) {
   t.done = !t.done;
   t.completedAt = t.done ? today() : null;
   // Completing a task logs the habit it's linked to — the whole point of linking.
+  // An event counts on its own day, even when it's ticked the morning after.
   if (t.done && t.habitId) {
-    const h = habitById(t.habitId);
-    if (h) setLog(h.id, today(), { v: Math.max(logValue(h.id, today()), R.goalOf(h)) });
+    const h = habitById(t.habitId), d = t.mins > 0 && t.due && t.due < today() ? t.due : today();
+    if (h) setLog(h.id, d, { v: Math.max(logValue(h.id, d), R.goalOf(h)) });
+  }
+  // A career event stands in for the day's career requirements: networking, applications.
+  if (t.done && t.career) {
+    const d = t.due && t.due < today() ? t.due : today();
+    scheduledOn(d).filter(h => h.area === 'Career' && R.isCareerWork(h.name))
+      .forEach(h => setLog(h.id, d, { v: Math.max(logValue(h.id, d), R.goalOf(h)) }));
   }
   runAdapt();
   save(); render();
@@ -3912,7 +5104,7 @@ function appSheet(id, kind) {
       </div>
       <label class="f">${school ? 'Materials' : 'Checklist'}</label>
       ${tmp.docs.map((d, i) => `<div class="check">
-        <button data-act="appDocTog:${i}" style="font-size:18px">${d.done ? '✅' : '○'}</button>
+        <button data-act="appDocTog:${i}" style="font-size:18px">${tickMark(d.done)}</button>
         <span style="flex:1">${esc(d.title)}</span>
         <button data-act="appDocDel:${i}" style="color:var(--red);font-size:13px">Remove</button></div>`).join('')}
       <div class="inline" style="margin-top:8px"><input id="apDoc" placeholder="Add an item">
@@ -4000,7 +5192,7 @@ function smartSheet() {
     </div>
     ${suggestions.length ? `<div class="card"><h2>${ic('sparkles')} Suggestions</h2>
       ${suggestions.map((s, i) => `<div class="check" style="align-items:flex-start">
-        <span style="font-size:18px">${s.kind === 'habit' ? '🔁' : '☑️'}</span>
+        <span style="font-size:18px">${glyph(s.kind === 'habit' ? '🔁' : '☑️')}</span>
         <div style="flex:1">
           <input data-sug="${i}" value="${esc(s.title)}" style="padding:6px 8px;font-size:15px">
           <div class="meta" style="margin-top:4px">
@@ -4076,7 +5268,7 @@ function settingsSheet() {
   const body = () => `
     <div class="card"><h2>${ic('repeat')} Habits</h2>
       ${DB.habits.length ? DB.habits.map(h => `<div class="check">
-        <span style="font-size:18px">${esc(h.icon)}</span>
+        <span style="font-size:18px">${glyph(h.icon)}</span>
         <span style="flex:1" data-act="hedit:${h.id}">${esc(h.name)}${h.archived ? ' <span class="pill">archived</span>' : ''}
           <div class="sub">${esc(h.kind)} · ${esc(h.schedule)}</div></span>
         <button data-act="hmove:${h.id}|-1" style="color:var(--dim);padding:0 5px" aria-label="Move up">▲</button>
@@ -4097,6 +5289,27 @@ function settingsSheet() {
       <div class="check" style="margin-top:14px"><span style="flex:1">Read 4/7 as 4 July<div class="sub">Off = 4 July is April 7th</div></span>
         <button class="sw" data-act="togDayFirst" aria-pressed="${!!DB.prefs.dayFirst}"></button></div>
       <button class="btn sec" data-act="saveGeneral">Save</button></div>
+
+    <div class="card"><h2>${ic('moon')} Appearance</h2>
+      <div class="seg" style="margin:0">${[['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']].map(([k, l]) =>
+        `<button data-act="themeset:${k}" aria-pressed="${(DB.prefs.theme || 'auto') === k}">${l}</button>`).join('')}</div>
+      <p class="hint" style="margin-top:8px">Auto follows your device.</p>
+      <div class="check" style="margin-top:6px"><span style="flex:1">Weather and tides
+        <div class="sub">${DB.prefs.place ? esc(DB.prefs.place.name) : 'No place set'}</div></span>
+        <button class="mini" data-act="place">${DB.prefs.place ? 'Change' : 'Add'}</button></div></div>
+
+    <div class="card"><h2>${ic('compass')} Photos on Home</h2>
+      <p class="hint" style="margin-bottom:8px">From Wikimedia Commons, used under their licences.</p>
+      ${SCENES.map(s => `<div class="sub" style="margin:4px 0"><a href="${commonsUrl(s)}" target="_blank" rel="noopener" style="color:var(--tint)">${esc(s.place)}</a>
+        · ${esc(s.by)} · ${esc(s.lic)}</div>`).join('')}</div>
+
+    <div class="card"><h2>${ic('clock')} Reminders and display</h2>
+      <div class="check"><span style="flex:1">Remind me before things start
+        <div class="sub">A notice 10 minutes before each timed habit, task or session, and another as it starts. Only while the app is open.</div></span>
+        <button class="sw" data-act="togRemind" aria-pressed="${!!DB.prefs.remind}"></button></div>
+      <div class="check"><span style="flex:1">Display mode
+        <div class="sub">Full screen with the screen kept on, for a tablet on the wall. Open …/#display to start in it.</div></span>
+        <button class="mini" data-act="kiosk">${S.kiosk ? 'Exit' : 'Start'}</button></div></div>
 
     <div class="card"><h2>${ic('lock')} Lock</h2>
       <div class="check"><span style="flex:1">Require Face ID to open
@@ -4121,6 +5334,7 @@ function settingsSheet() {
       <button class="btn sec" data-act="loadPlan">Load my 2027 plan</button>
     </div>
 
+    ${accountCard()}
     ${googleCard()}
 
     <div class="card"><h2>${ic('info')} About</h2>
@@ -4180,6 +5394,7 @@ function restoreBackup(data) {
   if (data && Array.isArray(data.habits) && data.logs && !Object.keys(DB.logs).length) {
     DB = Object.assign(JSON.parse(JSON.stringify(BLANK)), data);
     DB.prefs = Object.assign({}, BLANK.prefs, DB.prefs);
+    tidyHabits();
     save();
     return 'Backup restored.';
   }
@@ -4248,7 +5463,7 @@ async function unlock() {
 
 function lockScreen() {
   $('#main').innerHTML = `<div class="wizard" style="padding-top:60px">
-    <div class="art">🔒</div><h2>Locked</h2>
+    <div class="art">${ic('lock')}</div><h2>Locked</h2>
     <p>Project 1% is locked.</p>
     <button class="btn" data-act="doUnlock" style="max-width:240px;margin:24px auto 0">Unlock</button></div>`;
   $('#tabs').style.display = 'none';
@@ -4257,8 +5472,6 @@ function lockScreen() {
 
 // ---------- onboarding ----------
 const STARTERS = [
-  { area: 'Health', name: 'Drink water', icon: '💧', kind: 'counter', target: 8 },
-  { area: 'Health', name: 'Move 30 minutes', icon: '🏃', kind: 'timer', target: 30 },
   { area: 'Health', name: 'Sleep by 11pm', icon: '😴', kind: 'checkbox', target: 1 },
   { area: 'Finance', name: "Log today's spending", icon: '💰', kind: 'checkbox', target: 1 },
   { area: 'Finance', name: 'No-spend day', icon: '🛒', kind: 'checkbox', target: 1 },
@@ -4281,21 +5494,21 @@ function onboarding() {
       `<i class="${i === st.step ? 'on' : ''}"></i>`).join('')}</div>`;
     let inner = '';
     if (st.step === 0) {
-      inner = `<div class="art">📈</div><h2>Project 1%</h2>
+      inner = `<div class="art">${ic('trend-up')}</div><h2>Project 1%</h2>
         <p>Habits, money and tasks in one place.<br>One percent better, every day.</p>
         <p class="hint" style="margin-top:14px">Everything stays on this phone. No account, no analytics.</p>`;
     } else if (st.step === 1) {
       inner = `<h2>What are you working on?</h2><p>Pick as many as you like.</p>
         ${['Health', 'Finance', 'Career'].map(a => `<button class="opt" data-act="obGoal:${a}">
-          <span style="font-size:22px">${AREAS[a]}</span><strong>${a}</strong>
-          <span class="tickbox">${st.goals.has(a) ? '✅' : '⚪️'}</span></button>`).join('')}`;
+          <span style="font-size:22px">${glyph(AREAS[a])}</span><strong>${a}</strong>
+          <span class="tickbox">${tickMark(st.goals.has(a))}</span></button>`).join('')}`;
     } else if (st.step === 2) {
       inner = `<h2>Start with these?</h2><p>Change or delete any of them later.</p>
         ${suggested().map(s => `<button class="opt" data-act="obPick:${encodeURIComponent(s.name)}">
-          <span style="font-size:22px">${s.icon}</span>
+          <span style="font-size:22px">${glyph(s.icon)}</span>
           <span style="text-align:left"><strong>${esc(s.name)}</strong>
             <div class="sub">${esc(s.area)}${s.kind !== 'checkbox' ? ' · ' + s.target + (s.kind === 'timer' ? ' min' : '×') : ''}</div></span>
-          <span class="tickbox">${st.picked.has(s.name) ? '✅' : '⚪️'}</span></button>`).join('')}`;
+          <span class="tickbox">${tickMark(st.picked.has(s.name))}</span></button>`).join('')}`;
     } else {
       inner = `<h2>Last thing</h2><p>Optional — a monthly spending cap.</p>
         <label class="f" style="text-align:left">Currency</label>
@@ -4359,15 +5572,34 @@ function daySlots(day) {
   // shown, never ticked or scored, and go first so a habit at the same minute sorts after.
   // ponytail: comes from the plan file, no editor; add one when the routine changes often.
   const wd = R.fromYMD(day).getDay();
-  const out = (DB.routine || []).filter(b => !b.days || b.days.includes(wd)).map(b => ({
-    at: b.at, act: '', icon: b.icon, name: b.name, color: 'var(--dim)', done: false,
-    meta: b.to ? `until ${b.to}` : '', block: true,
+  const fixed = (DB.routine || []).filter(b => !b.days || b.days.includes(wd)).map(b => ({
+    at: b.at, to: b.to, act: '', icon: b.icon, name: b.name, color: 'var(--dim)', done: false, meta: '', block: true,
   }));
-  scheduledOn(day).forEach(h => out.push({
-    at: h.at || stackedAt(h), act: `hopenday:${h.id}|${day}`, icon: h.icon, name: h.name,
-    color: h.color, done: habitDone(h, day),
+  scheduledOn(day).forEach(h => fixed.push({
+    at: h.at || stackedAt(h), mins: h.minutes || (h.kind === 'timer' ? R.goalOf(h) : 0),
+    act: `hopenday:${h.id}|${day}`, habit: true, quick: day === today() ? h.id : null,
+    icon: h.icon, name: h.name, color: h.color, done: habitDone(h, day), goalId: h.goalId || null,
     meta: R.goalOf(h) > 1 ? `${Math.round(logValue(h.id, day))}/${R.goalOf(h)}` : '',
   }));
+  // A timed task with a length is an event: the routine and the habits make room for it
+  // for that day only. A career event also stands in for the day's career block.
+  const short = s => s.replace(/\s*\(.*$/, '').slice(0, 40);
+  const evs = (idx().tk[day] || []).filter(t => t.dueTime && t.mins > 0)
+    .map(t => ({ at: t.dueTime, mins: t.mins, name: short(t.title), career: !!t.career }))
+    // Planned sessions are drawn by the callers; here they only claim their time.
+    .concat(planSessions(day).map(p => ({ at: p.at, mins: p.len, name: short(p.name) })));
+  // Everything on your Google Calendar that day, from the last sync. One you already put on the
+  // day as a task shows once, as the task. A busy one claims its time like any other event.
+  const gevs = (DB.gsync.events || []).filter(e => e.day === day && !DB.tasks.some(t => t.gid === e.id));
+  gevs.filter(e => e.at && !e.free).forEach(e => evs.push({ at: e.at, mins: e.mins, name: short(e.summary) }));
+  const seen = new Set(), out = [];
+  R.fitDay(fixed, evs).forEach(s => {
+    // A block cut in two is still one habit to tick, so only its first piece counts.
+    const part = !s.block && seen.has(s.act);
+    seen.add(s.act);
+    // daySchedule reuses `mins` for the start minute, so the length rides along as `len`.
+    out.push(Object.assign({}, s, { part, len: s.to ? 0 : s.mins || 0, meta: [s.block && s.to ? `until ${s.to}` : s.meta, s.note].filter(Boolean).join(' · ') }));
+  });
   // Cards due are a real thing to do today, so they belong on the day like anything
   // else — in the any-time bucket, because a review has no hour of its own.
   if (day === today()) {
@@ -4375,16 +5607,29 @@ function daySlots(day) {
     if (due) out.push({ at: null, act: 'study', icon: '🧠', color: 'var(--tint)',
                         name: `Review ${due} card${due === 1 ? '' : 's'}`, done: false, meta: '' });
   }
+  gevs.forEach(e => out.push({ at: e.at, len: e.mins, act: `gopen:${e.id}`, icon: '🗓️', name: e.summary, color: 'var(--orange)', done: false, ev: true,
+    meta: (e.allDay ? 'All day' : `until ${R.hhmm(Math.min(R.minutesOf(e.at) + e.mins, 1439))}`) + ' · Google Calendar' }));
   (idx().tk[day] || []).forEach(t => out.push({
-    at: t.dueTime, act: `tbrief:${t.id}`, tick: `taskdone:${t.id}`, icon: t.done ? '✅' : '☑️', name: t.title,
-    color: 'var(--green)', done: t.done, meta: t.project || '',
+    at: t.dueTime, len: t.mins || 0, goalId: t.goalId || null, act: `tbrief:${t.id}`, tick: `taskdone:${t.id}`, icon: t.done ? '✅' : t.mins > 0 ? '📅' : '☑️', name: t.title,
+    color: 'var(--green)', done: t.done,
+    meta: [t.mins > 0 && t.dueTime ? `until ${R.hhmm(Math.min(R.minutesOf(t.dueTime) + t.mins, 1439))}${t.career ? ' · career event' : ''}` : t.project || '',
+      t.deadline && t.deadline !== day ? `deadline ${fmtDue(t.deadline)}${t.deadlineTime ? ' ' + t.deadlineTime : ''}` : ''].filter(Boolean).join(' · '),
+  }));
+  // A deadline on a day the task isn't scheduled for still shows on that day, at its time.
+  DB.tasks.filter(t => !t.done && t.deadline === day && t.due !== day).forEach(t => out.push({
+    at: t.deadlineTime || null, len: 0, goalId: t.goalId || null, act: `tbrief:${t.id}`, tick: `taskdone:${t.id}`, icon: '⏰', name: 'Deadline: ' + t.title,
+    color: 'var(--red)', done: false, meta: t.due ? `scheduled ${fmtDue(t.due)}` : '',
   }));
   return out;
 }
 
+/** What a calendar shows for a day: tasks, events and sessions. Habits and the routine are
+    the day's schedule, and that lives on Today. */
+const calSlots = day => daySlots(day).filter(s => !s.block && !s.habit && !s.part && s.act !== 'study').concat(planSessions(day));
+
 function slotChip(s) {
   return `<button class="slot${s.done ? ' done' : ''}" data-act="${s.act}" style="--hc:${esc(s.color)}">
-    <span>${esc(s.icon)}</span><span style="flex:1;text-align:left">${esc(s.name)}</span>
+    <span>${glyph(s.icon)}</span><span style="flex:1;text-align:left">${esc(s.name)}</span>
     ${s.at ? `<span class="t">${esc(s.at)}</span>` : ''}
     ${s.meta ? `<span class="t">${esc(s.meta)}</span>` : ''}</button>`;
 }
@@ -4395,7 +5640,7 @@ function hourGrid(day) {
   const nowHour = now.getHours();
   // Widen the window to hold the current hour too, or at 5am the red line has nowhere
   // to be drawn.
-  const sched = R.daySchedule(daySlots(day),
+  const sched = R.daySchedule(calSlots(day),
     isToday ? Math.min(6, nowHour) : 6, isToday ? Math.max(22, nowHour) : 22);
   const nowPos = ((now.getMinutes() / 60) * 100).toFixed(1);
 
@@ -4417,24 +5662,16 @@ function hourGrid(day) {
       <span class="hlabel">any</span>
       <div class="hlane">${sched.anytime.map(slotChip).join('')}</div></div>` : ''}
     <div class="hours">${rows}</div>
-    <p class="hint" style="margin-top:12px">Tap an hour to put something there. A habit
-      with no time of day sits under “any” — give it one in its editor to move it onto the clock.</p>
+    <p class="hint" style="margin-top:12px">Tap an hour to put something there. Habits and
+      the routine are on Today, fitted around what's here.</p>
   </div>`;
 }
 
+/** A day from the calendar: its events and tasks by the hour, and its money. The day's
+    habits and routine are on Today, one tap away. */
 function dayBody(day) {
-  const x = R.dayIndex(day, indexCtx());
-  const score = Math.round((x.score || 0) * 100);
-  const part = (label, v) => (v == null ? null : `${label} ${Math.round(v * 100)}%`);
   const tx = dayTxns(day);
-  return `<div class="card"><div class="row" style="gap:16px">
-      ${ring(score, 80, score >= 80 ? 'var(--green)' : score >= 50 ? 'var(--tint)' : 'var(--orange)')}
-      <div style="flex:1"><div style="font-size:26px;font-weight:700">${score}%</div>
-        <div class="sub" style="margin-top:4px">${
-          [part('habits', x.habits), part('tasks', x.tasks), part('budget', x.money)]
-            .filter(Boolean).join(' · ') || 'nothing tracked on this day'}</div></div>
-    </div></div>
-    ${hourGrid(day)}
+  return `${hourGrid(day)}
     <div class="card"><h2>${ic('card')} Spending</h2>
     ${tx.length ? `<ul class="list">${tx.map(t => `<li data-act="txedit:${t.id}">
       <span class="tick">${catIcon(t.category)}</span><span style="flex:1">${esc(t.note || t.category)}</span>
@@ -4445,22 +5682,11 @@ function dayBody(day) {
 const dayTitle = day => R.fromYMD(day).toLocaleDateString(undefined,
   { weekday: 'long', day: 'numeric', month: 'long' });
 
-function viewDay() {
-  const day = S.calAnchor;
-  return `<div class="card">
-    <div class="row">
-      <button data-act="dayshift:-1" style="font-size:20px;width:32px">‹</button>
-      <span class="spacer" style="text-align:center;font-weight:600">${esc(dayTitle(day))}</span>
-      <button data-act="caltoday" style="font-size:13px;color:var(--tint)">Today</button>
-      <button data-act="dayshift:1" style="font-size:20px;width:32px">›</button>
-    </div>
-  </div>${dayBody(day)}`;
-}
-
-// The same day, in a sheet, when you tap a square on the month or year grid.
+// A day from the calendar, in a sheet.
 function daySheet(day) {
   const body = () => dayBody(day) +
-    `<button class="btn" data-act="addOn:${day}">Add an entry to this day</button>`;
+    `<button class="btn" data-act="addOn:${day}">Add an entry to this day</button>` +
+    `<button class="btn sec" data-act="todayday:${day}">Open this day's schedule on Today</button>`;
   openSheet(dayTitle(day), body(),
     () => { sheetSubmit = { redraw: () => { $('#sheetInner').innerHTML = body(); } }; });
 }
@@ -4470,14 +5696,14 @@ function quickAdd(day, hour) {
   const at = `${day || ''}|${hour == null ? '' : hour}`;
   openSheet('Add', `<div class="wizard" style="padding-top:6px">
     <button class="opt" data-act="qaCapture"><span style="font-size:22px">${ic('inbox')}</span><strong>Capture a thought</strong></button>
-    <button class="opt" data-act="qaHabit:${at}"><span style="font-size:22px">🔁</span><strong>Habit</strong></button>
-    <button class="opt" data-act="qaMoney:${day || ''}"><span style="font-size:22px">💳</span><strong>Money entry</strong></button>
-    <button class="opt" data-act="qaTask:${at}"><span style="font-size:22px">☑️</span><strong>Task</strong></button>
-    <button class="opt" data-act="appnew:job"><span style="font-size:22px">📨</span><strong>Application</strong></button>
-    <button class="opt" data-act="tradenew"><span style="font-size:22px">📈</span><strong>Trade</strong></button>
-    <button class="opt" data-act="goalnew"><span style="font-size:22px">🎯</span><strong>Goal</strong></button>
-    <button class="opt" data-act="cardnew"><span style="font-size:22px">🧠</span><strong>Card to remember</strong></button>
-    <button class="opt" data-act="practice"><span style="font-size:22px">🎚️</span><strong>Practice session</strong></button>
+    <button class="opt" data-act="qaHabit:${at}"><span style="font-size:22px">${glyph('🔁')}</span><strong>Habit</strong></button>
+    <button class="opt" data-act="qaMoney:${day || ''}"><span style="font-size:22px">${glyph('💳')}</span><strong>Money entry</strong></button>
+    <button class="opt" data-act="qaTask:${at}"><span style="font-size:22px">${glyph('☑️')}</span><strong>Task</strong></button>
+    <button class="opt" data-act="appnew:job"><span style="font-size:22px">${glyph('📨')}</span><strong>Application</strong></button>
+    <button class="opt" data-act="tradenew"><span style="font-size:22px">${glyph('📈')}</span><strong>Trade</strong></button>
+    <button class="opt" data-act="goalnew"><span style="font-size:22px">${glyph('🎯')}</span><strong>Goal</strong></button>
+    <button class="opt" data-act="cardnew"><span style="font-size:22px">${glyph('🧠')}</span><strong>Card to remember</strong></button>
+    <button class="opt" data-act="practice"><span style="font-size:22px">${glyph('🎚️')}</span><strong>Practice session</strong></button>
   </div>`);
 }
 
@@ -4931,7 +6157,55 @@ document.addEventListener('click', async ev => {
   const S2 = sheetSubmit;
 
   switch (act) {
-    case 'tab': S.tab = arg; S.anim = true; render(); break;
+    case 'tab': vt(() => { S.tab = arg; S.anim = true; render(); }); break;
+    case 'slide':
+      if (S.tab === 'dash') goSlide(Number(arg));
+      else vt(() => { S.tab = 'dash'; S.slide = Number(arg); S.anim = true; render(); });
+      break;
+    case 'bshift': S.briefShift = Number(arg) ? (S.briefShift || 0) + Number(arg) : 0; render(); break;
+    case 'gopen': { const e = (DB.gsync.events || []).find(x => x.id === arg); if (e && e.link) window.open(e.link, '_blank', 'noopener'); break; }
+    case 'hshift': {
+      const step = Number(arg), mode = S.homeCal || 'week', at = S.homeAnchor || today();
+      if (!step) S.homeAnchor = today();
+      else if (mode === 'month') { const dd = R.fromYMD(at); dd.setDate(1); dd.setMonth(dd.getMonth() + step); S.homeAnchor = R.ymd(dd); }
+      else S.homeAnchor = R.addDays(at, step * (mode === 'week' ? 7 : 1));
+      render(); break;
+    }
+    case 'hcal': S.homeCal = arg; render(); break;
+    // From a day on the calendar to the same day on Today, where its schedule lives.
+    case 'todayday':
+      closeSheet();
+      S.briefShift = R.daysBetween(today(), arg);
+      if (S.tab === 'dash') { render(); goSlide(1); }
+      else vt(() => { S.tab = 'dash'; S.slide = 1; S.anim = true; render(); });
+      break;
+    case 'theme': setTheme(isDark() ? 'light' : 'dark', ev.clientX, ev.clientY); break;
+    case 'themeset': setTheme(arg, ev.clientX, ev.clientY); if (S2) setTimeout(() => S2.redraw(), 50); break;
+    case 'place': placeSheet(); break;
+    case 'plFind': if (S2) {
+      const q = val('plQ').trim();
+      if (!q) break;
+      try {
+        const r = await (await fetch('https://geocoding-api.open-meteo.com/v1/search?count=6&language=en&name=' + encodeURIComponent(q))).json();
+        S2.list = r.results || [];
+        if (!S2.list.length) toast('No place by that name.');
+      } catch (e) { toast('Could not search: are you online?'); }
+      S2.redraw();
+    } break;
+    case 'plPick': if (S2 && S2.list[Number(arg)]) {
+      const r = S2.list[Number(arg)];
+      setPlace({ name: r.name, lat: +r.latitude.toFixed(3), lon: +r.longitude.toFixed(3) });
+    } break;
+    case 'plHere':
+      if (!navigator.geolocation) { toast('Location is not available here.'); break; }
+      navigator.geolocation.getCurrentPosition(
+        pos => setPlace({ name: 'My location', lat: +pos.coords.latitude.toFixed(3), lon: +pos.coords.longitude.toFixed(3) }),
+        () => toast('Location was not allowed. Search by name instead.'));
+      break;
+    case 'plClear': DB.prefs.place = null; save(); try { localStorage.removeItem(WKEY); } catch (e) {} closeSheet(); render(); break;
+    case 'earlier': S.earlier = !el.closest('details').open; break; // read before the browser toggles it
+    case 'kiosk': if ($('#sheet').classList.contains('open')) closeSheet(); kiosk(!S.kiosk); break;
+    case 'togRemind': await toggleRemind(); if (S2) S2.redraw(); break;
     case 'growto': S.tab = 'grow'; S.growView = arg; S.anim = true; render(); break;
     case 'close': closeSheet(); break;
     case 'settings': settingsSheet(); break;
@@ -5110,7 +6384,6 @@ document.addEventListener('click', async ev => {
 
     case 'gridweeks': S.gridWeeks = Number(arg); S.anim = true; render(); break;
     case 'range': S.range = Number(arg); S.anim = true; render(); break;
-    case 'calview': S.calView = arg; S.anim = true; render(); break;
     case 'grid': {
       // Cells are bare <i>; their date is their position on the board.
       const cell = ev.target.closest('i');
@@ -5145,7 +6418,6 @@ document.addEventListener('click', async ev => {
       quickAdd(d, hr);
       break;
     }
-    case 'dayshift': S.calAnchor = R.addDays(S.calAnchor, Number(arg)); S.anim = true; render(); break;
 
     case 'hquick': {
       const h = habitById(arg);
@@ -5295,13 +6567,6 @@ document.addEventListener('click', async ev => {
     case 'subTog': if (S2) { const s = S2.tmp.subs[Number(arg)]; s.done = !s.done; S2.redraw(); } break;
     case 'subDel': if (S2) { S2.tmp.subs.splice(Number(arg), 1); S2.redraw(); } break;
 
-    case 'calmode': S.calMode = arg; render(); break;
-    case 'calshift': {
-      const d = R.fromYMD(S.calAnchor);
-      d.setDate(1); d.setMonth(d.getMonth() + Number(arg));
-      S.calAnchor = R.ymd(d); render(); break;
-    }
-    case 'caltoday': S.calAnchor = today(); render(); break;
     case 'calday': daySheet(arg); break;
 
     case 'finshift': {
@@ -5396,18 +6661,213 @@ document.addEventListener('click', async ev => {
 // Dismiss only when the dark backdrop itself is tapped — never a child of it.
 $('#sheet').addEventListener('click', ev => { if (ev.target.id === 'sheet') closeSheet(); });
 
+
+// ---------- workspaces: halves and thirds ----------
+// On a tablet or wall a workspace is laid out like Home's slides: one screen, its cards in
+// two or three columns that each run to the bottom, so nothing is left as an empty strip.
+// Cards are dealt in reading order to the shortest column; a column scrolls on its own
+// when its cards are long. A control sitting between cards travels with the card under it.
+// Habits are one kind of card repeated, so they take an even grid instead. Phones keep the
+// single column. ponytail: heights are measured once, before the deal, at the full width;
+// good enough to balance, re-measure per column if a view ever needs it exact.
+const WIDE_Q = '(min-width: 900px) and (min-height: 560px)';
+function boardify(colScroll) {
+  const w = document.querySelector('#main > div');
+  if (!w || !w.children || !w.querySelectorAll || !window.matchMedia || !matchMedia(WIDE_Q).matches) return;
+  const kids = [...w.children];
+  const first = kids.findIndex(k => k.classList.contains('card'));
+  if (first < 0) return;
+  if (S.tab === 'habits') {
+    w.classList.add('wsgrid');
+    // The last row is never left with a hole: its final card takes the cells that remain.
+    const cards = kids.filter(k => k.classList.contains('card'));
+    const cols = getComputedStyle(w).gridTemplateColumns.split(' ').length || 1;
+    const rem = cards.length % cols;
+    if (rem && cards.length) cards[cards.length - 1].style.gridColumn = 'span ' + (cols - rem + 1);
+    $('#main').classList.add('wspad');
+    return;
+  }
+  const cols = dealColumns(w, kids, first, innerWidth >= 1300 ? 3 : 2);
+  w.classList.add('ws');
+  $('#main').classList.add('wsmode');
+  (colScroll || []).forEach((y, i) => { if (cols[i]) cols[i].scrollTop = y; });
+}
+
+/** Deal a container's cards into n columns (fewer when there are fewer cards; two when one
+    card dominates). Each card brings any control sitting just above it; what trails the
+    last card becomes a footer row. Returns the columns. */
+function dealColumns(w, kids, first, n) {
+  // Units: each card with any control just above it; what trails the last card is a footer.
+  const last = kids.map(k => k.classList.contains('card')).lastIndexOf(true);
+  const units = [];
+  let pend = [];
+  kids.slice(first, last + 1).forEach(k => {
+    if (k.classList.contains('card')) { units.push(pend.concat(k)); pend = []; } else pend.push(k);
+  });
+  const foot = kids.slice(last + 1);
+  const hs = units.map(u => u.reduce((s, k) => s + k.offsetHeight, 0));
+  const total = hs.reduce((s, x) => s + x, 0) || 1;
+  // One card dominating a few: it gets a half, the rest the other. With more cards than that,
+  // the rest keep two columns of their own, so the long one never crowds them into a corner.
+  if (Math.max(...hs) > total * 0.55 && units.length <= 3) n = Math.min(n, 2);
+  n = Math.max(1, Math.min(n, units.length));
+  const grid = document.createElement('div');
+  grid.className = 'bcols';
+  grid.style.setProperty('--n', n);
+  const cols = Array.from({ length: n }, () => { const c = document.createElement('div'); c.className = 'bcol'; grid.appendChild(c); return c; });
+  const fill = cols.map(() => 0);
+  units.forEach((u, i) => {
+    const c = fill.indexOf(Math.min(...fill));
+    if (u.length > 1) {
+      const box = document.createElement('div');
+      box.className = 'unit';
+      u.forEach(k => box.appendChild(k));
+      cols[c].appendChild(box);
+    } else cols[c].appendChild(u[0]);
+    fill[c] += hs[i];
+  });
+  w.insertBefore(grid, foot[0] || null);
+  if (foot.length) {
+    const f = document.createElement('div');
+    f.className = 'bfoot';
+    foot.forEach(k => f.appendChild(k));
+    w.appendChild(f);
+  }
+  return cols;
+}
+
+// ---------- windows: the same layout, in a pop-up ----------
+// On a tablet or wall a sheet is a centred window, not a drawer. A window made of cards
+// (a day, a goal, a habit, Settings, a review) opens wide and deals its cards into halves
+// or thirds, every column running to the bottom; a form opens as a compact panel the size
+// of the form. Sheets redraw themselves as you tick things, so the layout is re-applied
+// whenever fresh cards appear (cards already dealt are not looked at again).
+function layoutSheet() {
+  const body = document.getElementById('sheetBody'), inner = document.getElementById('sheetInner');
+  if (!body || !inner || !inner.children || !body.classList || !window.matchMedia) return;
+  const wide = matchMedia(WIDE_Q).matches;
+  const kids = [...inner.children], first = kids.findIndex(k => k.classList.contains('card'));
+  const board = wide && kids.filter(k => k.classList.contains('card')).length >= 2;
+  body.classList.toggle('sheet-board', board);
+  // A long form gets a wider window and two columns. Each label keeps its control and any
+  // hint under it in one group, so a field is never split across the columns.
+  const labels = kids.filter(k => k.matches && k.matches('label.f'));
+  const two = wide && !board && labels.length >= 6;
+  body.classList.toggle('sheet-form', wide && !board && !two);
+  body.classList.toggle('sheet-form2', two);
+  if (two) {
+    let grp = null;
+    kids.forEach(k => {
+      if (k.matches('label.f')) { grp = document.createElement('div'); grp.className = 'fld'; inner.insertBefore(grp, k); }
+      else if (k.classList.contains('btn')) grp = null; // the actions sit across the foot
+      if (grp) grp.appendChild(k);
+    });
+  }
+  if (!board) return;
+  // The wide window is sized first, so the deal can read its real width.
+  dealColumns(inner, kids, first, inner.clientWidth >= 1050 ? 3 : 2);
+}
+let sheetRaf = 0;
+if (window.MutationObserver && document.getElementById) {
+  const sb = document.getElementById('sheetBody');
+  if (sb && sb.nodeType) new MutationObserver(() => {
+    const inner = document.getElementById('sheetInner');
+    // Only fresh, undealt cards need a layout; after the deal there are none, so no loop.
+    if (!inner || !inner.querySelector || !inner.querySelector(':scope > .card, :scope > label.f')) return;
+    cancelAnimationFrame(sheetRaf);
+    sheetRaf = requestAnimationFrame(layoutSheet);
+  }).observe(sb, { childList: true, subtree: true });
+}
+// A resize can change the column count; repaint the workspace once it settles.
+let boardT = null;
+if (window.addEventListener) addEventListener('resize', () => {
+  clearTimeout(boardT);
+  boardT = setTimeout(() => { if (S.tab !== 'dash' && !$('#sheet').classList.contains('open')) render(); }, 180);
+});
+
+// ---------- live: the clock, the minute, reminders, display mode ----------
+// A wall calendar is only useful if it is right without being touched. The clock text
+// updates in place; once a minute Today repaints (quietly, keeping the scroll) so now,
+// next and the red line move with the day, unless a sheet is open or the page is hidden.
+let lastMin = -1;
+const fired = new Set();
+function liveTick() {
+  const n = new Date(), m = n.getHours() * 60 + n.getMinutes();
+  const c = document.getElementById('hClock');
+  if (c) c.innerHTML = clockHTML(n);
+  if (m === lastMin) return;
+  const first = lastMin < 0;
+  lastMin = m;
+  if (DB.prefs.remind) remindAt(m);
+  sceneTick();
+  loadWx(); // no-op until 30 minutes have passed
+  if (!first && S.tab === 'dash' && document.visibilityState !== 'hidden' && !$('#sheet').classList.contains('open')) {
+    S.keepScroll = $('#main').scrollTop; S.quiet = true; render();
+  }
+}
+
+// ponytail: reminders fire while the app is open (a tablet in Display mode, or the phone
+// in hand). With the app closed they need Web Push, which needs a server this app doesn't have.
+function remindAt(m) {
+  const d = today();
+  R.dueReminders(briefData().sched.placed, m, 10).forEach(r => {
+    const key = d + '|' + r.key;
+    if (fired.has(key)) return;
+    fired.add(key);
+    toast(r.text);
+    try {
+      if ('Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker)
+        navigator.serviceWorker.ready.then(reg => reg.showNotification('Project 1%', { body: r.text, tag: key, icon: 'icon-192.png' })).catch(() => {});
+    } catch (e) { /* the toast already said it */ }
+  });
+}
+
+async function toggleRemind() {
+  if (DB.prefs.remind) { DB.prefs.remind = false; save(); return; }
+  try { if ('Notification' in window && Notification.permission === 'default') await Notification.requestPermission(); } catch (e) {}
+  DB.prefs.remind = true; save();
+  toast('Reminders on: 10 minutes before, and as each thing starts.');
+}
+
+// Display mode: full screen, no chrome, the screen kept awake. For a tablet on the wall
+// or the kitchen counter. The wake lock drops whenever the page hides, so it is taken again
+// each time it comes back.
+let wake = null;
+async function keepAwake() {
+  try { if (S.kiosk && navigator.wakeLock && document.visibilityState === 'visible') wake = await navigator.wakeLock.request('screen'); } catch (e) {}
+}
+function kiosk(on) {
+  S.kiosk = on;
+  document.body.classList[on ? 'add' : 'remove']('kiosk');
+  try {
+    const de = document.documentElement;
+    if (on && de.requestFullscreen) de.requestFullscreen().catch(() => {});
+    if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  } catch (e) {}
+  if (on) keepAwake();
+  else if (wake) { wake.release().catch(() => {}); wake = null; }
+  S.tab = 'dash'; S.anim = true; render();
+}
+
 // ---------- boot ----------
 async function boot() {
   try { await start(); } catch (e) { showCrash('Startup failed', e); }
 }
 
 async function start() {
+  $('#pills').innerHTML = pillsHTML();
+  if (window.addEventListener) addEventListener('resize', placeThumbs);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeThumbs).catch(() => {});
   applyAccent();
+  applyTheme();
   await planBoot().catch(e => showCrash('Plan', e)); // the rest of the app works without it
   await loadBundledPlan(false).catch(e => showCrash('Plan file', e));
   runAdapt();
   const deep = /^#tab=(\w+)/.exec(location.hash || ''); // a bookmarkable tab: …/#tab=habits
   if (deep && TITLES[deep[1]]) S.tab = deep[1];
+  else if (deep && deep[1] === 'cal') { S.tab = 'dash'; S.slide = 0; }
+  const deepSlide = /slide=(\d)/.exec(location.hash || ''); // …/#slide=1 opens Home on Today
+  if (deepSlide) S.slide = Math.min(SLIDES.length - 1, Number(deepSlide[1]));
   const deepBrief = /brief=(goal|habit|task):([\w-]+)/.exec(location.hash || ''); // …/#brief=goal:p1g-cfa
   const signedIn = googleReturn();
   driveSync(); // in the background; takes the cloud copy (and reloads) if another device changed it
@@ -5419,6 +6879,21 @@ async function start() {
     return;
   }
   render();
+  if (deepSlide) goSlide(S.slide); // the plan loader may have painted the deck before the hash was read
+  liveTick();
+  const live = setInterval(liveTick, 15000);
+  if (live && live.unref) live.unref(); // Node (the smoke test) must still be able to exit
+  document.addEventListener('visibilitychange', keepAwake);
+  // Arrow keys move through Home's slides, like a presentation.
+  document.addEventListener('keydown', e => {
+    if (S.tab !== 'dash' || $('#sheet').classList.contains('open') || /INPUT|TEXTAREA|SELECT/.test((e.target || {}).tagName || '')) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); goSlide(S.slide + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); goSlide(S.slide - 1); }
+  });
+  // Auto follows the device live; a pinned theme ignores it.
+  if (window.matchMedia) { const mq = matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', applyTheme); }
+  loadWx();
+  if (/display/.test(location.hash || '')) kiosk(true); // …/#display opens straight into Display mode
   if (!DB.prefs.onboarded) onboarding();
   else if (deepBrief) ({ goal: goalDetail, habit: habitBrief, task: taskBrief })[deepBrief[1]](deepBrief[2]);
 }
